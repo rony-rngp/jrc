@@ -70,6 +70,19 @@
                                             </div>
                                             <div class="modal-body">
                                                 <div class="form-group">
+                                                    <label class="col-sm-3 control-label">Parent Head</label>
+                                                    <div class="col-sm-9">
+                                                        <select class="form-control" name="parent_id">
+                                                            <option value="0">None (Main Head)</option>
+                                                            @foreach($heads as $h)
+                                                                @if($h->id != $head->id)
+                                                                    <option value="{{ $h->id }}" {{ $head->parent_id == $h->id ? 'selected' : '' }}>{{ $h->head_name }}</option>
+                                                                @endif
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
                                                     <label class="col-sm-3 control-label">Head Name</label>
                                                     <div class="col-sm-9">
                                                         <input type="text" class="form-control" name="head_name" value="{{ $head->head_name }}" required>

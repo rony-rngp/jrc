@@ -34,6 +34,7 @@ class MaterialCategoryController extends Controller
         $cat = MaterialCategory::findOrFail($id);
         $cat->update([
             'cat_name' => $request->input('cat_name'),
+            'date' => $request->input('date', $cat->date) ?? date('Y-m-d'),
             'note' => $request->input('note', ''),
         ]);
 

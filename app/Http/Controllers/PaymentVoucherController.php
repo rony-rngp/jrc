@@ -444,122 +444,147 @@ class PaymentVoucherController extends Controller
 
     public function edit($id, Request $request)
     {
-        $type = $request->input('type', 'General');
-        $paymentMethods = PaymentMethod::orderBy('method_name', 'asc')->get();
+        $edit_type = $request->input('type', 'General');
+        $edit_id = (int)$id;
+        $data = null;
 
-        $voucherNo = '';
-        $amount = 0;
-        $t_date = date('Y-m-d');
-        $note = '';
-        $method_id = 0;
-
-        if ($type == 'Supplier') {
-            $voucher = SupplierPayment::findOrFail($id);
-            $voucherNo = $voucher->voucher_no;
-            $amount = $voucher->amount;
-            $t_date = $voucher->t_date;
-            $note = $voucher->note;
-            $method_id = $voucher->method_id;
-        } elseif ($type == 'Project') {
-            $voucher = DB::table('project_expenses')->where('id', $id)->first();
-            $voucherNo = $voucher->voucher_no;
-            $amount = $voucher->amount;
-            $t_date = $voucher->t_date;
-            $note = $voucher->note;
-            $method_id = $voucher->method_id;
+        if ($edit_type == 'Supplier') {
+            $data = DB::table('supplier_payments as sp')
+                ->leftJoin('party as p', 'sp.supplier_id', '=', 'p.id')
+                ->leftJoin('project as pr', 'sp.project_id', '=', 'pr.id')
+                ->leftJoin('supplier_bills as b', 'sp.bill_id', '=', 'b.id')
+                ->leftJoin('payment_method as m', 'sp.method_id', '=', 'm.id')
+                ->where('sp.id', $edit_id)
+                ->select('sp.*', 'p.party_name', 'pr.project_name', 'b.voucher_no as bill_voucher', 'm.method_name', 'm.account_type')
+                ->first();
+        } elseif ($edit_type == 'Project') {
+            $data = DB::table('project_expenses as pe')
+                ->leftJoin('project as pr', 'pe.project_id', '=', 'pr.id')
+                ->leftJoin('payment_method as m', 'pe.method_id', '=', 'm.id')
+                ->where('pe.id', $edit_id)
+                ->select('pe.*', 'pr.project_name', 'm.method_name', 'm.account_type')
+                ->first();
         } else {
-            $voucher = GeneralTransaction::findOrFail($id);
-            $voucherNo = $voucher->check_no;
-            $amount = $voucher->amount;
-            $t_date = $voucher->t_date;
-            $note = $voucher->note;
-            $method_id = $voucher->method_id;
+            $data = DB::table('general_transactions as gt')
+                ->leftJoin('account_heads as h', 'gt.head_id', '=', 'h.id')
+                ->leftJoin('payment_method as m', 'gt.method_id', '=', 'm.id')
+                ->where('gt.id', $edit_id)
+                ->select('gt.*', 'gt.check_no as voucher_no', 'h.head_name', 'm.method_name', 'm.account_type')
+                ->first();
+            if ($data && str_contains($data->note ?? '', '[Loan')) {
+                $edit_type = 'Loan';
+            }
         }
 
-        return view('payment_vouchers.edit', compact('voucher', 'type', 'id', 'voucherNo', 'amount', 't_date', 'note', 'method_id', 'paymentMethods'));
+        if (!$data) {
+            return redirect()->route('payment-vouchers.index')->with('error', 'Data not found!');
+        }
+
+        return view('payment_vouchers.edit', compact('data', 'edit_type', 'edit_id'));
     }
 
     public function update(Request $request, $id)
     {
-        $type = $request->input('type', 'General');
-        $new_amount = (float)$request->input('amount', 0);
-        $new_date = $request->input('t_date', date('Y-m-d'));
-        $new_note = $request->input('note', '');
-        $method_id = (int)$request->input('method_id');
+        $edit_id = (int)$id;
+        $type = $request->input('edit_type', 'General');
+        $old_amount = (float)$request->input('old_amount', 0);
+        $new_amount = (float)$request->input('new_amount', $request->input('amount', 0));
+        $old_voucher = $request->input('old_voucher', '');
+        $new_voucher = $request->input('new_voucher', $request->input('voucher_no', $old_voucher));
+        $new_date = $request->input('new_date', $request->input('t_date', date('Y-m-d')));
+        $new_note = $request->input('new_note', $request->input('note', ''));
+
+        // Duplicate voucher check
+        if ($old_voucher !== $new_voucher && !empty($new_voucher)) {
+            $q1 = DB::table('supplier_payments')->where('voucher_no', $new_voucher)->where('id', '!=', $edit_id)->exists();
+            $q2 = DB::table('project_expenses')->where('voucher_no', $new_voucher)->where('id', '!=', $edit_id)->exists();
+            $q3 = DB::table('general_transactions')->where('check_no', $new_voucher)->where('id', '!=', $edit_id)->exists();
+            if ($q1 || $q2 || $q3) {
+                return redirect()->back()->with('error', "Update Failed! Voucher No [<b>{$new_voucher}</b>] already exists in another transaction.");
+            }
+        }
 
         DB::beginTransaction();
         try {
             if ($type == 'Supplier') {
-                $sp = SupplierPayment::findOrFail($id);
-                $old_amount = (float)$sp->amount;
-                $old_status = $sp->approval_status;
-                $old_method = $sp->method_id;
-
-                if ($old_status == 'Approved' && $old_method) {
-                    $pm = PaymentMethod::find($old_method);
-                    if ($pm) $pm->increment('amount', $old_amount);
+                $sp = SupplierPayment::findOrFail($edit_id);
+                if ($sp->approval_status == 'Approved') {
+                    $diff = $new_amount - $old_amount;
+                    if ($sp->method_id) {
+                        PaymentMethod::where('id', $sp->method_id)->decrement('amount', $diff);
+                    }
+                    if ($sp->bill_id > 0) {
+                        SupplierBill::where('id', $sp->bill_id)->increment('paid_amount', $diff);
+                        SupplierBill::where('id', $sp->bill_id)->decrement('due_amount', $diff);
+                    }
+                } else {
+                    if ($sp->method_id) {
+                        PaymentMethod::where('id', $sp->method_id)->decrement('amount', $new_amount);
+                    }
+                    if ($sp->bill_id > 0) {
+                        SupplierBill::where('id', $sp->bill_id)->increment('paid_amount', $new_amount);
+                        SupplierBill::where('id', $sp->bill_id)->decrement('due_amount', $new_amount);
+                    }
                 }
 
                 $sp->update([
                     'amount' => $new_amount,
-                    't_date' => $new_date,
                     'note' => $new_note,
-                    'method_id' => $method_id,
+                    'voucher_no' => $new_voucher,
+                    't_date' => $new_date,
+                    'approval_status' => 'Approved',
                 ]);
-
-                if ($old_status == 'Approved' && $method_id) {
-                    $pmNew = PaymentMethod::find($method_id);
-                    if ($pmNew) $pmNew->decrement('amount', $new_amount);
-                }
-
             } elseif ($type == 'Project') {
-                $pe = DB::table('project_expenses')->where('id', $id)->first();
+                $pe = DB::table('project_expenses')->where('id', $edit_id)->first();
                 if ($pe) {
-                    $old_amount = (float)$pe->amount;
-                    if ($pe->approval_status == 'Approved' && $pe->method_id) {
-                        PaymentMethod::where('id', $pe->method_id)->increment('amount', $old_amount);
+                    if ($pe->approval_status == 'Approved') {
+                        $diff = $new_amount - $old_amount;
+                        if ($pe->method_id) {
+                            PaymentMethod::where('id', $pe->method_id)->decrement('amount', $diff);
+                        }
+                    } else {
+                        if ($pe->method_id) {
+                            PaymentMethod::where('id', $pe->method_id)->decrement('amount', $new_amount);
+                        }
                     }
 
-                    DB::table('project_expenses')->where('id', $id)->update([
+                    DB::table('project_expenses')->where('id', $edit_id)->update([
                         'amount' => $new_amount,
-                        't_date' => $new_date,
                         'note' => $new_note,
-                        'method_id' => $method_id,
+                        'voucher_no' => $new_voucher,
+                        't_date' => $new_date,
+                        'approval_status' => 'Approved',
                     ]);
-
-                    if ($pe->approval_status == 'Approved' && $method_id) {
-                        PaymentMethod::where('id', $method_id)->decrement('amount', $new_amount);
-                    }
                 }
-
             } else {
-                $gt = GeneralTransaction::findOrFail($id);
-                $old_amount = (float)$gt->amount;
-                if ($gt->approval_status == 'Approved' && $gt->method_id) {
-                    $pm = PaymentMethod::find($gt->method_id);
-                    if ($pm) $pm->increment('amount', $old_amount);
+                $gt = GeneralTransaction::findOrFail($edit_id);
+                if ($gt->approval_status == 'Approved') {
+                    $diff = $new_amount - $old_amount;
+                    if ($gt->method_id) {
+                        PaymentMethod::where('id', $gt->method_id)->decrement('amount', $diff);
+                    }
+                } else {
+                    if ($gt->method_id) {
+                        PaymentMethod::where('id', $gt->method_id)->decrement('amount', $new_amount);
+                    }
                 }
 
                 $gt->update([
                     'amount' => $new_amount,
-                    't_date' => $new_date,
                     'note' => $new_note,
-                    'method_id' => $method_id,
+                    'check_no' => $new_voucher,
+                    't_date' => $new_date,
+                    'approval_status' => 'Approved',
                 ]);
-
-                if ($gt->approval_status == 'Approved' && $method_id) {
-                    $pmNew = PaymentMethod::find($method_id);
-                    if ($pmNew) $pmNew->decrement('amount', $new_amount);
-                }
             }
 
-            ActivityLogger::log('Update', "Updated payment voucher ID {$id} ({$type})");
+            ActivityLogger::log('Update', "Updated and approved payment voucher {$new_voucher} ({$type})");
             DB::commit();
 
-            return redirect()->route('payment-vouchers.index')->with('success', 'Payment Voucher updated successfully!');
+            return redirect()->route('payment-vouchers.index')->with('success', 'Transaction updated and <b>Approved</b> successfully! Balances adjusted automatically.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Update failed: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to update transaction balance: ' . $e->getMessage());
         }
     }
 

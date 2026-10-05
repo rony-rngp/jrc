@@ -36,6 +36,7 @@ class AccountHeadController extends Controller
         $head->update([
             'head_name' => $request->input('head_name'),
             'head_type' => $request->input('head_type', $head->head_type),
+            'parent_id' => (int)$request->input('parent_id', $head->parent_id ?? 0),
             'description' => $request->input('description', $head->description),
         ]);
 

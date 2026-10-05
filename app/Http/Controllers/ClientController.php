@@ -75,6 +75,7 @@ class ClientController extends Controller
             'persion_name' => $request->input('persion_name', $client->persion_name) ?? '',
             'contact' => $request->input('contact', $client->contact) ?? '',
             'address' => $request->input('address', $client->address) ?? '',
+            'opening_balance' => (float)$request->input('opening_balance', $client->opening_balance ?? 0),
             'date' => $request->input('date', $client->date) ?? date('Y-m-d'),
             'note' => $request->input('note', $client->note) ?? '',
         ]);

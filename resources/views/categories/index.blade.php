@@ -61,6 +61,12 @@
                                   </div>
                               </div>     
                               <div class="form-group">
+                                  <label for="date" class="col-sm-3 control-label">Entry Date</label>
+                                  <div class="col-sm-9">
+                                    <input type="date" class="form-control" name="date" value="{{ $category->date }}">
+                                  </div>
+                              </div>
+                              <div class="form-group">
                                   <label for="note" class="col-sm-3 control-label">Note</label>
                                   <div class="col-sm-9">
                                     <textarea class="form-control" name="note">{{ $category->note }}</textarea>

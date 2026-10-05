@@ -38,6 +38,7 @@ class PaymentMethodController extends Controller
             'method_name' => $request->input('method_name'),
             'account_type' => $request->input('account_type', $pm->account_type),
             'amount' => (float)$request->input('amount', $pm->amount),
+            'date' => $request->input('date', $pm->date) ?? date('Y-m-d'),
             'note' => $request->input('note', $pm->note),
         ]);
 

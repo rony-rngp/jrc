@@ -136,6 +136,13 @@ class ReceiveVoucherController extends Controller
                 $methods = PaymentMethod::where('account_type', $type)->orderBy('method_name', 'asc')->get();
                 return response()->json($methods);
             }
+
+            // 7. Get Sub Heads
+            if ($ajax_request == 'get_sub_heads') {
+                $parent_id = (int)$request->input('parent_id');
+                $subHeads = AccountHead::where('parent_id', $parent_id)->where('head_type', 'Receive')->orderBy('head_name', 'asc')->get();
+                return response()->json($subHeads);
+            }
         }
 
         // Fetch recent transactions union like legacy
@@ -421,84 +428,119 @@ class ReceiveVoucherController extends Controller
     public function edit($id, Request $request)
     {
         $type = $request->input('type', 'Others');
-        $paymentMethods = PaymentMethod::orderBy('method_name', 'asc')->get();
-        $accountHeads = AccountHead::where('head_type', 'Receive')->whereNull('parent_id')->orWhere('parent_id', 0)->orderBy('head_name', 'asc')->get();
-        $clients = Client::orderBy('company_name', 'asc')->get();
-        $projects = Project::orderBy('project_name', 'asc')->get();
 
-        if ($type == 'Client') {
-            $voucher = PaymentReceivedProject::findOrFail($id);
-            $voucherNo = $voucher->check_no ?: (str_contains($voucher->name, ': ') ? explode(': ', $voucher->name)[1] : $voucher->name);
-        } else {
+        if ($type == 'Others') {
             $voucher = GeneralTransaction::findOrFail($id);
             $voucherNo = $voucher->check_no;
+            $amount = $voucher->amount;
+            $date = $voucher->t_date;
+            $note = $voucher->note;
+            $client_name = '';
+
+            $lineage_ids = [];
+            if (!empty($voucher->head_id)) {
+                $curr = (int)$voucher->head_id;
+                while ($curr > 0) {
+                    array_unshift($lineage_ids, $curr);
+                    $head = AccountHead::find($curr);
+                    $curr = ($head && $head->parent_id) ? (int)$head->parent_id : 0;
+                }
+            }
+        } else {
+            $voucher = PaymentReceivedProject::findOrFail($id);
+            $voucherNo = $voucher->check_no ?: (str_contains($voucher->name, ': ') ? explode(': ', $voucher->name)[1] : $voucher->name);
+            $amount = $voucher->pay_amount;
+            $date = $voucher->date;
+            $note = $voucher->note;
+            $client_name = $voucher->company_name;
+            $lineage_ids = [];
         }
 
-        return view('receive_vouchers.edit', compact('voucher', 'type', 'id', 'voucherNo', 'paymentMethods', 'accountHeads', 'clients', 'projects'));
+        $method = PaymentMethod::find($voucher->method_id);
+        $deposit_category = $method ? $method->account_type : 'Cash';
+
+        $paymentMethods = PaymentMethod::where('account_type', $deposit_category)->orderBy('method_name', 'asc')->get();
+        $clients = Client::orderBy('company_name', 'asc')->get();
+
+        return view('receive_vouchers.edit', compact(
+            'voucher', 'type', 'id', 'voucherNo', 'amount', 'date', 'note',
+            'client_name', 'deposit_category', 'lineage_ids', 'paymentMethods', 'clients'
+        ));
     }
 
     public function update(Request $request, $id)
     {
         $type = $request->input('type', 'Others');
         $amount = (float)$request->input('amount', 0);
+        $old_amount = (float)$request->input('old_amount', 0);
         $method_id = (int)$request->input('method_id');
-        $note = $request->input('note', '');
+        $old_method_id = (int)$request->input('old_method_id');
+        $deposit_category = $request->input('deposit_category', 'Cash');
         $t_date = $request->input('t_date', date('Y-m-d'));
+        $voucher = $request->input('voucher');
+        $base_note = $request->input('note', '');
+
+        $extra_info = "";
+        $ref_no = $voucher;
+
+        if ($deposit_category == 'Bank') {
+            $sender_bank = $request->input('sender_bank_name', '');
+            $trans_type = $request->input('bank_trans_type', '');
+            $bank_ref_no = $request->input('bank_ref_no', '');
+            if (!empty($bank_ref_no)) $ref_no = $bank_ref_no;
+            if (!empty($sender_bank) || !empty($trans_type) || !empty($bank_ref_no)) {
+                $extra_info = "[Bank: $sender_bank | Type: $trans_type | Ref: $bank_ref_no]";
+            }
+        } elseif ($deposit_category == 'MFS') {
+            $mfs_type = $request->input('mfs_type', '');
+            $mfs_ref_no = $request->input('mfs_ref_no', '');
+            if (!empty($mfs_ref_no)) $ref_no = $mfs_ref_no;
+            if (!empty($mfs_type) || !empty($mfs_ref_no)) {
+                $extra_info = "[MFS: $mfs_type | TrxID: $mfs_ref_no]";
+            }
+        }
+
+        $final_note = !empty($extra_info) ? ($extra_info . " - " . $base_note) : $base_note;
 
         DB::beginTransaction();
         try {
-            if ($type == 'Client') {
-                $voucher = PaymentReceivedProject::findOrFail($id);
-                $oldAmt = (float)$voucher->pay_amount;
-                $oldMethod = $voucher->method_id;
-                $oldStatus = $voucher->approval_status;
+            if ($old_method_id) {
+                PaymentMethod::where('id', $old_method_id)->decrement('amount', $old_amount);
+            }
+            if ($method_id) {
+                PaymentMethod::where('id', $method_id)->increment('amount', $amount);
+            }
 
-                // Revert old method balance if approved
-                if ($oldStatus == 'Approved' && $oldMethod) {
-                    $pmOld = PaymentMethod::find($oldMethod);
-                    if ($pmOld) $pmOld->decrement('amount', $oldAmt);
-                }
-
-                $voucher->update([
+            if ($type == 'Others') {
+                $head_id = (int)$request->input('head_id');
+                $tx = GeneralTransaction::findOrFail($id);
+                $tx->update([
+                    't_date' => $t_date,
+                    'head_id' => $head_id ?: $tx->head_id,
+                    'method_id' => $method_id,
+                    'amount' => $amount,
+                    'check_no' => $ref_no,
+                    'note' => $final_note,
+                ]);
+            } else {
+                $client_name = $request->input('client_name');
+                $voucher_str = "Voucher: " . $voucher;
+                $rec = PaymentReceivedProject::findOrFail($id);
+                $rec->update([
+                    'date' => $t_date,
+                    'company_name' => $client_name ?: $rec->company_name,
+                    'name' => $voucher_str,
+                    'check_no' => $voucher,
                     'pay_amount' => $amount,
                     'method_id' => $method_id,
-                    'date' => $t_date,
-                    'note' => $note,
+                    'note' => $final_note,
                 ]);
-
-                if ($oldStatus == 'Approved' && $method_id) {
-                    $pmNew = PaymentMethod::find($method_id);
-                    if ($pmNew) $pmNew->increment('amount', $amount);
-                }
-            } else {
-                $voucher = GeneralTransaction::findOrFail($id);
-                $oldAmt = (float)$voucher->amount;
-                $oldMethod = $voucher->method_id;
-                $oldStatus = $voucher->approval_status;
-
-                if ($oldStatus == 'Approved' && $oldMethod) {
-                    $pmOld = PaymentMethod::find($oldMethod);
-                    if ($pmOld) $pmOld->decrement('amount', $oldAmt);
-                }
-
-                $voucher->update([
-                    'amount' => $amount,
-                    'method_id' => $method_id,
-                    't_date' => $t_date,
-                    'note' => $note,
-                    'head_id' => $request->input('head_id', $voucher->head_id),
-                ]);
-
-                if ($oldStatus == 'Approved' && $method_id) {
-                    $pmNew = PaymentMethod::find($method_id);
-                    if ($pmNew) $pmNew->increment('amount', $amount);
-                }
             }
 
             ActivityLogger::log('Update', "Updated receive voucher ID {$id} ({$type})");
             DB::commit();
 
-            return redirect()->route('receive-vouchers.index')->with('success', 'Receive Voucher updated successfully!');
+            return redirect()->route('receive-vouchers.index')->with('success', 'Voucher updated and balance adjusted successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Update failed: ' . $e->getMessage());

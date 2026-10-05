@@ -39,6 +39,12 @@
                         </div>
                     </div>
                     <div class="form-group">
+                        <label class="col-sm-3 control-label">Opening Balance</label>
+                        <div class="col-sm-9">
+                            <input type="number" step="any" class="form-control" name="amount" value="{{ $supplier->amount ?? 0 }}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <label class="col-sm-3 control-label">Date</label>
                         <div class="col-sm-9">
                             <input type="date" class="form-control" name="date" value="{{ $supplier->date }}">
