@@ -10,8 +10,30 @@ class AccountHeadController extends Controller
 {
     public function index()
     {
-        $heads = AccountHead::orderBy('id', 'desc')->get();
-        return view('account_heads.index', compact('heads'));
+        $allHeads = AccountHead::orderBy('head_name', 'asc')->get();
+        $hierarchicalHeads = $this->buildHierarchy($allHeads);
+
+        return view('account_heads.index', [
+            'heads' => $hierarchicalHeads,
+            'allHeads' => $allHeads
+        ]);
+    }
+
+    private function buildHierarchy($heads, $parentId = 0, $level = 0)
+    {
+        $result = [];
+        $children = $heads->where('parent_id', $parentId)->sortBy('head_name');
+
+        foreach ($children as $head) {
+            $head->level = $level;
+            $result[] = $head;
+            $subResults = $this->buildHierarchy($heads, $head->id, $level + 1);
+            foreach ($subResults as $sub) {
+                $result[] = $sub;
+            }
+        }
+
+        return $result;
     }
 
     public function store(Request $request)
@@ -20,7 +42,7 @@ class AccountHeadController extends Controller
 
         $head = AccountHead::create([
             'head_name' => $request->input('head_name'),
-            'head_type' => $request->input('head_type', 'Expense'),
+            'head_type' => $request->input('head_type', 'Payment'),
             'parent_id' => (int)$request->input('parent_id', 0),
             'description' => $request->input('description', ''),
         ]);
