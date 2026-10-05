@@ -40,47 +40,6 @@
                   </form>
                 </td>
               </tr>
-
-              <!-- Edit Modal -->
-              <div class="modal fade" id="edit_{{ $category->id }}">
-                  <div class="modal-dialog">
-                      <div class="modal-content">
-                          <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span></button>
-                            <h4 class="modal-title"><b>Edit Product Name</b></h4>
-                          </div>
-                          <form class="form-horizontal" method="POST" action="{{ route('categories.update', $category->id) }}">
-                            @csrf
-                            @method('PUT')
-                            <div class="modal-body">
-                              <div class="form-group">
-                                  <label for="cat_name" class="col-sm-3 control-label">Category Name</label>
-                                  <div class="col-sm-9">
-                                    <input type="text" class="form-control" name="cat_name" value="{{ $category->cat_name }}" required>
-                                  </div>
-                              </div>     
-                              <div class="form-group">
-                                  <label for="date" class="col-sm-3 control-label">Entry Date</label>
-                                  <div class="col-sm-9">
-                                    <input type="date" class="form-control" name="date" value="{{ $category->date }}">
-                                  </div>
-                              </div>
-                              <div class="form-group">
-                                  <label for="note" class="col-sm-3 control-label">Note</label>
-                                  <div class="col-sm-9">
-                                    <textarea class="form-control" name="note">{{ $category->note }}</textarea>
-                                  </div>
-                              </div>
-                            </div>
-                            <div class="modal-footer">
-                              <button type="button" class="btn btn-default btn-flat pull-left" data-dismiss="modal"><i class="fa fa-close"></i> Close</button>
-                              <button type="submit" class="btn btn-success btn-flat"><i class="fa fa-check-square-o"></i> Update</button>
-                            </div>
-                          </form>
-                      </div>
-                  </div>
-              </div>
             @endforeach
           </tbody>
         </table>
@@ -88,6 +47,49 @@
     </div>
   </div>
 </div>
+
+<!-- Edit Modals (Outside table for valid DOM & proper form margins) -->
+@foreach($categories as $category)
+<div class="modal fade" id="edit_{{ $category->id }}">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title"><b>Edit Product Name</b></h4>
+            </div>
+            <form class="form-horizontal" method="POST" action="{{ route('categories.update', $category->id) }}">
+              @csrf
+              @method('PUT')
+              <div class="modal-body">
+                <div class="form-group">
+                    <label for="cat_name_{{ $category->id }}" class="col-sm-3 control-label">Category Name</label>
+                    <div class="col-sm-9">
+                      <input type="text" class="form-control" id="cat_name_{{ $category->id }}" name="cat_name" value="{{ $category->cat_name }}" required>
+                    </div>
+                </div>     
+                <div class="form-group">
+                    <label for="date_{{ $category->id }}" class="col-sm-3 control-label">Entry Date</label>
+                    <div class="col-sm-9">
+                      <input type="date" class="form-control" id="date_{{ $category->id }}" name="date" value="{{ $category->date }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="note_{{ $category->id }}" class="col-sm-3 control-label">Note</label>
+                    <div class="col-sm-9">
+                      <textarea class="form-control" id="note_{{ $category->id }}" name="note" rows="3">{{ $category->note }}</textarea>
+                    </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default btn-flat pull-left" data-dismiss="modal"><i class="fa fa-close"></i> Close</button>
+                <button type="submit" class="btn btn-success btn-flat"><i class="fa fa-check-square-o"></i> Update</button>
+              </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
 
 <!-- Add Modal -->
 <div class="modal fade" id="addnew">
@@ -110,7 +112,7 @@
                 <div class="form-group">
                     <label for="note" class="col-sm-3 control-label">Note</label>
                     <div class="col-sm-9">
-                      <textarea class="form-control" name="note" id="note"></textarea>
+                      <textarea class="form-control" name="note" id="note" rows="3" placeholder="Category remarks..."></textarea>
                     </div>
                 </div>
               </div>

@@ -27,368 +27,38 @@
     <!-- Select2 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
     <!-- AdminLTE Skins. -->
+    <!-- AdminLTE Skins. -->
     <link rel="stylesheet" href="{{ asset('dist/css/skins/_all-skins.min.css') }}">
 
-  	<!-- Google Font -->
-  	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
+    <!-- Google Font & Modern Admin UI CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="{{ asset('css/modern-admin.css') }}">
 
-  	<style type="text/css">
-  		.mt20{
-  			margin-top:20px;
-  		}
-      .bold{
-        font-weight:bold;
-      }
-
-     /* chart style*/
-      #legend ul {
-        list-style: none;
-      }
-
-      #legend ul li {
-        display: inline;
-        padding-left: 30px;
-        position: relative;
-        margin-bottom: 4px;
-        border-radius: 5px;
-        padding: 2px 8px 2px 28px;
-        font-size: 14px;
-        cursor: default;
-        -webkit-transition: background-color 200ms ease-in-out;
-        -moz-transition: background-color 200ms ease-in-out;
-        -o-transition: background-color 200ms ease-in-out;
-        transition: background-color 200ms ease-in-out;
-      }
-
-      #legend li span {
-        display: block;
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 20px;
-        height: 100%;
-        border-radius: 5px;
-      }
-
-      /* =========================================
-         Modern Smart Header CSS 
-         ========================================= */
-      .main-header {
-          box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-          border: none;
-      }
-      
-      .main-header .logo {
-          background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
-          color: #ffffff !important;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          font-weight: 800;
-          letter-spacing: 0.5px;
-          border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-          border-right: 1px solid rgba(255,255,255,0.05) !important;
-          transition: all 0.3s ease;
-      }
-      .main-header .logo:hover {
-          background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
-      }
-
-      .main-header .navbar {
-          background: #ffffff !important;
-          border: none;
-      }
-
-      .main-header .sidebar-toggle {
-          color: #64748b !important;
-          font-size: 16px;
-          transition: all 0.3s ease;
-      }
-      .main-header .sidebar-toggle:hover {
-          background: #f1f5f9 !important;
-          color: #3b82f6 !important;
-      }
-
-      .navbar-nav > li > a {
-          color: #475569 !important;
-          font-weight: 600;
-          padding-top: 15px;
-          padding-bottom: 15px;
-          transition: all 0.3s ease;
-      }
-      .navbar-nav > li > a:hover {
-          background: #f8fafc !important;
-          color: #2563eb !important;
-      }
-      .navbar-nav > .user-menu > a > img {
-          border: 2px solid #e2e8f0;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      }
-
-      .navbar-nav > .messages-menu > a .label {
-          border-radius: 50%;
-          padding: 4px 6px;
-          font-size: 10px;
-          top: 8px;
-          right: 5px;
-          box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-      }
-      .navbar-nav > .messages-menu > .dropdown-menu {
-          border-radius: 16px;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.12);
-          border: none;
-          width: 320px;
-          padding: 0;
-          margin-top: 10px;
-      }
-      .navbar-nav > .messages-menu > .dropdown-menu > li.header {
-          background: #f8fafc;
-          color: #334155;
-          font-weight: 700;
-          padding: 15px;
-          border-bottom: 1px solid #e2e8f0;
-          border-radius: 16px 16px 0 0;
-          font-size: 14px;
-      }
-      .navbar-nav > .messages-menu > .dropdown-menu > li .menu {
-          max-height: 250px;
-          overflow-y: auto;
-          margin: 0;
-          padding: 0;
-          list-style: none;
-      }
-      .navbar-nav > .messages-menu > .dropdown-menu > li .menu > li {
-          border-bottom: 1px solid #f1f5f9;
-      }
-      .navbar-nav > .messages-menu > .dropdown-menu > li .menu > li > a {
-          padding: 12px 15px;
-          display: block;
-          transition: all 0.2s ease;
-          text-decoration: none;
-      }
-      .navbar-nav > .messages-menu > .dropdown-menu > li .menu > li > a:hover {
-          background: #f1f5f9;
-      }
-      .navbar-nav > .messages-menu > .dropdown-menu > li .menu > li > a h4 {
-          margin: 0 0 5px 0;
-          font-size: 14px;
-          color: #0f172a;
-          font-weight: 600;
-      }
-      .navbar-nav > .messages-menu > .dropdown-menu > li .menu > li > a p {
-          margin: 0;
-          font-size: 12px;
-          color: #64748b;
-          white-space: normal;
-      }
-      .navbar-nav > .messages-menu > .dropdown-menu > li.footer > a {
-          background: #ffffff;
-          color: #3b82f6;
-          font-weight: 600;
-          text-align: center;
-          padding: 12px;
-          border-top: 1px solid #e2e8f0;
-          border-radius: 0 0 16px 16px;
-          transition: all 0.3s ease;
-      }
-      .navbar-nav > .messages-menu > .dropdown-menu > li.footer > a:hover {
-          background: #eff6ff;
-      }
-
-      .navbar-nav > .user-menu > .dropdown-menu {
-          border-radius: 16px;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.12);
-          border: none;
-          overflow: hidden;
-          width: 280px;
-          margin-top: 10px;
-      }
-      .navbar-nav > .user-menu > .dropdown-menu > .user-header {
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
-          padding: 25px 10px;
-      }
-      .navbar-nav > .user-menu > .dropdown-menu > .user-header > img {
-          border: 3px solid rgba(255,255,255,0.3);
-          box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      }
-      .navbar-nav > .user-menu > .dropdown-menu > .user-header > p {
-          color: #ffffff;
-          font-weight: 700;
-          font-size: 16px;
-          margin-top: 10px;
-      }
-      .navbar-nav > .user-menu > .dropdown-menu > .user-header > p > small {
-          color: #bfdbfe;
-          font-weight: 500;
-          font-size: 12px;
-          margin-top: 5px;
-      }
-      .navbar-nav > .user-menu > .dropdown-menu > .user-footer {
-          background: #ffffff !important;
-          padding: 15px 20px !important;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-      }
-      
-      .btn-smart-update {
-          background: #f1f5f9;
-          color: #334155;
-          border: none;
-          border-radius: 20px;
-          font-weight: 600;
-          padding: 8px 20px;
-          transition: all 0.3s ease;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      }
-      .btn-smart-update:hover {
-          background: #e2e8f0;
-          color: #0f172a;
-          transform: translateY(-2px);
-      }
-
-      .btn-smart-logout {
-          background: #fee2e2;
-          color: #ef4444;
-          border: none;
-          border-radius: 20px;
-          font-weight: 600;
-          padding: 8px 20px;
-          transition: all 0.3s ease;
-          box-shadow: 0 2px 5px rgba(239, 68, 68, 0.1);
-      }
-      .btn-smart-logout:hover {
-          background: #fca5a5;
-          color: #b91c1c;
-          transform: translateY(-2px);
-      }
-
-      /* =========================================
-         Modern Smart Sidebar CSS 
-         ========================================= */
-      .main-sidebar {
-          background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
-          box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      }
-      
-      .user-panel {
-          padding: 20px 15px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-          margin-bottom: 15px;
-      }
-      .user-panel .info p {
-          color: #f8fafc;
-          font-weight: 700;
-          font-size: 16px;
-          margin-bottom: 5px;
-          letter-spacing: 0.5px;
-      }
-      .user-panel .info a {
-          color: #94a3b8;
-          font-size: 13px;
-          font-weight: 500;
-      }
-      .user-panel .info a i {
-          text-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
-      }
-      .user-panel img {
-          border: 2px solid #3b82f6 !important;
-          padding: 2px;
-          box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
-          transition: transform 0.3s ease;
-      }
-      .user-panel img:hover {
-          transform: scale(1.08);
-      }
-
-      .sidebar-menu {
-          padding-top: 10px;
-      }
-      .sidebar-menu > li {
-          margin: 5px 12px;
-      }
-      .sidebar-menu > li > a {
-          border-radius: 8px;
-          color: #cbd5e1 !important;
-          transition: all 0.3s ease;
-          padding: 12px 15px !important;
-          font-weight: 600;
-          letter-spacing: 0.3px;
-      }
-      
-      .sidebar-menu > li:hover > a, 
-      .sidebar-menu > li.active > a {
-          background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%) !important;
-          color: #ffffff !important;
-          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-          transform: translateX(5px);
-      }
-      
-      .sidebar-menu > li > a i.fa {
-          font-size: 16px;
-          margin-right: 10px;
-          width: 20px;
-          text-align: center;
-          transition: transform 0.3s ease;
-      }
-      .sidebar-menu > li:hover > a i.fa {
-          transform: scale(1.2);
-      }
-
-      .sidebar-menu .treeview-menu {
-          background: rgba(0, 0, 0, 0.15) !important;
-          border-radius: 8px;
-          padding: 8px;
-          margin-top: 5px;
-      }
-      .sidebar-menu .treeview-menu > li {
-          margin: 2px 0;
-      }
-      .sidebar-menu .treeview-menu > li > a {
-          color: #94a3b8 !important;
-          border-radius: 6px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          padding: 8px 10px 8px 15px !important;
-          font-size: 14px;
-          font-weight: 500;
-      }
-      .sidebar-menu .treeview-menu > li > a i {
-          font-size: 12px;
-          transition: all 0.3s ease;
-      }
-      .sidebar-menu .treeview-menu > li > a:hover {
-          color: #ffffff !important;
-          background: rgba(255, 255, 255, 0.08) !important;
-          padding-left: 20px !important;
-      }
-      .sidebar-menu .treeview-menu > li > a:hover i {
-          color: #3b82f6;
-      }
-
-      /* Smart Dashboard Boxes */
-      .smart-box { border-radius: 18px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.08); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; color: #fff; margin-bottom: 25px; border: none; }
-      .smart-box:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
-      .smart-box .inner { padding: 25px 20px; z-index: 2; position: relative; }
-      .smart-box h3 { font-size: 28px; font-weight: 800; margin: 0 0 5px 0; white-space: nowrap; padding: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); font-family: 'Segoe UI', sans-serif; }
-      .smart-box p { font-size: 14px; margin-bottom: 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9; }
-      .smart-box .icon { position: absolute; top: -10px; right: 10px; z-index: 1; font-size: 80px; color: rgba(255, 255, 255, 0.15); transition: all 0.4s ease; }
-      .smart-box:hover .icon { font-size: 90px; color: rgba(255, 255, 255, 0.25); transform: rotate(-10deg) scale(1.1); }
-      .smart-box-footer { background: rgba(0,0,0,0.15); color: #fff; display: block; padding: 8px 0; text-align: center; text-decoration: none; font-size: 13px; font-weight: 600; z-index: 2; position: relative; transition: all 0.3s ease; letter-spacing: 0.5px; }
-      .smart-box-footer:hover { background: rgba(0,0,0,0.3); color: #fff; text-decoration: none; }
-
-      .grad-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-      .grad-danger { background: linear-gradient(135deg, #ED213A 0%, #93291E 100%); }
-      .grad-info { background: linear-gradient(135deg, #00B4DB 0%, #0083B0 100%); }
-      .grad-warning { background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%); }
-      .grad-primary { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-      .grad-purple { background: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%); }
-      .grad-dark { background: linear-gradient(135deg, #434343 0%, #000000 100%); }
-      .grad-magenta { background: linear-gradient(135deg, #ec008c 0%, #fc6767 100%); }
-
-      .smart-card { border-radius: 18px; border: none; box-shadow: 0 8px 25px rgba(0,0,0,0.06); background: #fff; margin-bottom: 30px; overflow: hidden; }
-      .smart-card-header { background: #fff; border-bottom: 1px solid #f0f2f5; padding: 20px 25px; }
-      .smart-card-title { font-weight: 800; color: #2c3e50; font-size: 18px; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; }
-      .chart-container { padding: 20px; }
-  	</style>
+    <style type="text/css">
+        .mt20 { margin-top: 20px; }
+        .bold { font-weight: bold; }
+        #legend ul { list-style: none; }
+        #legend ul li {
+            display: inline-block;
+            position: relative;
+            margin-bottom: 4px;
+            border-radius: 6px;
+            padding: 4px 10px 4px 28px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        #legend li span {
+            display: block;
+            position: absolute;
+            left: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+        }
+    </style>
     @stack('styles')
 </head>
 
@@ -399,11 +69,11 @@
     <header class="main-header">
         <a href="{{ route('dashboard') }}" class="logo">
           <span class="logo-mini"><b>J</b>RC</span>
-          <span class="logo-lg"><i class="fa fa-building-o" style="color:#3b82f6; margin-right:5px;"></i> <b>JR</b> Corp</span>
+          <span class="logo-lg"><i class="fa fa-building-o" style="color:#38bdf8; margin-right:6px;"></i> <b>JR</b> Corp</span>
         </a>
         
         <nav class="navbar navbar-static-top">
-          <a href="#" class="sidebar-toggle" data-toggle="push-menu" role="button">
+          <a href="#" class="sidebar-toggle" data-toggle="push-menu" role="button" title="Toggle Sidebar">
             <i class="fa fa-bars"></i>
             <span class="sr-only">Toggle navigation</span>
           </a>
@@ -415,8 +85,8 @@
                 $notif_count = \App\Models\SupplierBill::where('approval_status', 'Pending')->count() + \App\Models\SupplierPayment::where('approval_status', 'Pending')->count();
               @endphp
               <li class="dropdown messages-menu">
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                    <i class="fa fa-bell-o" style="font-size: 18px;"></i>
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Notifications">
+                    <i class="fa fa-bell-o"></i>
                     @if($notif_count > 0)
                       <span class="label label-danger">{{ $notif_count }}</span>
                     @endif
@@ -433,7 +103,7 @@
                             </a>
                           </li>
                         @else
-                          <li><a href='#'><p style='text-align:center; margin-top:10px;'>No new notifications</p></a></li>
+                          <li><a href='#'><p style='text-align:center; margin:10px 0;'>No new notifications</p></a></li>
                         @endif
                       </ul>
                     </li>
@@ -457,7 +127,7 @@
                   </li>
                   <li class="user-footer">
                     <div>
-                      <a href="#profile" data-toggle="modal" class="btn btn-smart-update" id="admin_profile"><i class="fa fa-user-circle"></i> Update</a>
+                      <a href="#profile" data-toggle="modal" class="btn btn-smart-update" id="admin_profile"><i class="fa fa-user-circle"></i> Profile</a>
                     </div>
                     <div>
                       <form action="{{ route('logout') }}" method="POST" style="display:inline;">
