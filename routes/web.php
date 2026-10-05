@@ -76,24 +76,24 @@ Route::middleware(['auth'])->group(function () {
     Route::post('profile/update', [UserController::class, 'updateProfile'])->name('users.profile.update');
 
     // All Ledgers
-    Route::get('ledger/client', [LedgerController::class, 'clientLedger'])->name('ledgers.client');
-    Route::get('ledger/client-print', [LedgerController::class, 'clientLedgerPrint'])->name('ledgers.client-print');
-    Route::get('ledger/supplier', [LedgerController::class, 'supplierLedger'])->name('ledgers.supplier');
-    Route::get('ledger/supplier-print', [LedgerController::class, 'supplierLedgerPrint'])->name('ledgers.supplier-print');
-    Route::get('ledger/project', [LedgerController::class, 'projectLedger'])->name('ledgers.project');
-    Route::get('ledger/loan', [LedgerController::class, 'loanLedger'])->name('ledgers.loan');
-    Route::get('ledger/office-expense', [LedgerController::class, 'officeExpenseLedger'])->name('ledgers.office_expense');
-    Route::get('ledger/office-expense-alias', [LedgerController::class, 'officeExpenseLedger'])->name('ledgers.office-expense');
-    Route::get('ledger/account-statement', [LedgerController::class, 'accountStatement'])->name('ledgers.account_statement');
-    Route::get('ledger/account-statement-alias', [LedgerController::class, 'accountStatement'])->name('ledgers.account-statement');
-    Route::get('ledger/receipts-payments', [LedgerController::class, 'receiptsPaymentsReport'])->name('ledgers.receipts_payments');
-    Route::get('ledger/receipts-payments-alias', [LedgerController::class, 'receiptsPaymentsReport'])->name('ledgers.receipts-payments');
+    Route::match(['get', 'post'], 'ledger/client', [LedgerController::class, 'clientLedger'])->name('ledgers.client');
+    Route::match(['get', 'post'], 'ledger/client-print', [LedgerController::class, 'clientLedgerPrint'])->name('ledgers.client-print');
+    Route::match(['get', 'post'], 'ledger/supplier', [LedgerController::class, 'supplierLedger'])->name('ledgers.supplier');
+    Route::match(['get', 'post'], 'ledger/supplier-print', [LedgerController::class, 'supplierLedgerPrint'])->name('ledgers.supplier-print');
+    Route::match(['get', 'post'], 'ledger/project', [LedgerController::class, 'projectLedger'])->name('ledgers.project');
+    Route::match(['get', 'post'], 'ledger/loan', [LedgerController::class, 'loanLedger'])->name('ledgers.loan');
+    Route::match(['get', 'post'], 'ledger/office-expense', [LedgerController::class, 'officeExpenseLedger'])->name('ledgers.office_expense');
+    Route::match(['get', 'post'], 'ledger/office-expense-alias', [LedgerController::class, 'officeExpenseLedger'])->name('ledgers.office-expense');
+    Route::match(['get', 'post'], 'ledger/account-statement', [LedgerController::class, 'accountStatement'])->name('ledgers.account_statement');
+    Route::match(['get', 'post'], 'ledger/account-statement-alias', [LedgerController::class, 'accountStatement'])->name('ledgers.account-statement');
+    Route::match(['get', 'post'], 'ledger/receipts-payments', [LedgerController::class, 'receiptsPaymentsReport'])->name('ledgers.receipts_payments');
+    Route::match(['get', 'post'], 'ledger/receipts-payments-alias', [LedgerController::class, 'receiptsPaymentsReport'])->name('ledgers.receipts-payments');
 
     // Top Ledgers
-    Route::get('top-ledger/balance-statement', [LedgerController::class, 'balanceStatement'])->name('top-ledgers.balance-statement');
-    Route::get('top-ledger/client-summary', [LedgerController::class, 'clientSummary'])->name('top-ledgers.client-summary');
-    Route::get('top-ledger/supplier-summary', [LedgerController::class, 'supplierSummary'])->name('top-ledgers.supplier-summary');
-    Route::get('top-ledger/employee-ledger', [LedgerController::class, 'employeeLedger'])->name('top-ledgers.employee-ledger');
+    Route::match(['get', 'post'], 'top-ledger/balance-statement', [LedgerController::class, 'balanceStatement'])->name('top-ledgers.balance-statement');
+    Route::match(['get', 'post'], 'top-ledger/client-summary', [LedgerController::class, 'clientSummary'])->name('top-ledgers.client-summary');
+    Route::match(['get', 'post'], 'top-ledger/supplier-summary', [LedgerController::class, 'supplierSummary'])->name('top-ledgers.supplier-summary');
+    Route::match(['get', 'post'], 'top-ledger/employee-ledger', [LedgerController::class, 'employeeLedger'])->name('top-ledgers.employee-ledger');
 
     // User & Roles
     Route::resource('users', UserController::class);
