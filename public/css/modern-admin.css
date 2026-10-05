@@ -10,15 +10,15 @@
   --color-primary-hover: #4338ca;
   --color-primary-light: #eef2ff;
   --color-secondary: #0ea5e9;
+  --color-accent: #06b6d4;
   --color-success: #10b981;
   --color-success-light: #ecfdf5;
   --color-warning: #f59e0b;
   --color-warning-light: #fffbeb;
   --color-danger: #ef4444;
   --color-danger-light: #fef2f2;
-  --color-dark: #0f172a;
-  --color-dark-light: #1e293b;
-  --color-sidebar-bg: linear-gradient(180deg, #0b1120 0%, #0f172a 60%, #1e293b 100%);
+  --color-header-bg: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+  --color-sidebar-bg: linear-gradient(180deg, #0b0f19 0%, #0f172a 45%, #1e1b4b 100%);
   --bg-main: #f8fafc;
   --card-bg: #ffffff;
   --border-color: #e2e8f0;
@@ -52,14 +52,14 @@ body, .hold-transition, .wrapper {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #0f172a;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #334155;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #4f46e5;
 }
 
 /* Keyframe Animations */
@@ -101,7 +101,7 @@ body, .hold-transition, .wrapper {
 }
 
 /* ==========================================================================
-   Fixed Header / Navbar Modern Design
+   Header / Navbar - Luxury Midnight Indigo & Sapphire Palette
    ========================================================================== */
 .main-header {
   position: fixed !important;
@@ -111,18 +111,16 @@ body, .hold-transition, .wrapper {
   height: 60px !important;
   max-height: 60px !important;
   z-index: 1030 !important;
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.18);
   border: none;
 }
 
 .main-header .navbar {
-  background: rgba(255, 255, 255, 0.96) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  background: var(--color-header-bg) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   min-height: 60px;
   height: 60px;
-  padding: 0 15px;
+  padding: 0 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -131,7 +129,7 @@ body, .hold-transition, .wrapper {
 }
 
 .main-header .logo {
-  background: linear-gradient(135deg, #0b1120 0%, #0f172a 100%) !important;
+  background: #0b0f19 !important;
   color: #ffffff !important;
   font-family: var(--font-primary);
   font-weight: 800;
@@ -141,7 +139,7 @@ body, .hold-transition, .wrapper {
   line-height: 60px !important;
   width: 230px !important;
   padding: 0 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   transition: all var(--transition-normal);
   display: block;
@@ -149,25 +147,25 @@ body, .hold-transition, .wrapper {
 }
 
 .main-header .logo:hover {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+  background: #0f172a !important;
   color: #38bdf8 !important;
 }
 
 .main-header .sidebar-toggle {
-  color: #475569 !important;
+  color: #e2e8f0 !important;
   font-size: 18px;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
-  background: transparent;
+  background: rgba(255, 255, 255, 0.08);
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .main-header .sidebar-toggle:hover {
-  background: #f1f5f9 !important;
-  color: var(--color-primary) !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #38bdf8 !important;
   transform: scale(1.05);
 }
 
@@ -183,7 +181,7 @@ body, .hold-transition, .wrapper {
 }
 
 .navbar-custom-menu .navbar-nav > li > a {
-  color: #475569 !important;
+  color: #e2e8f0 !important;
   font-weight: 600;
   font-size: 14px;
   padding: 8px 14px;
@@ -196,8 +194,8 @@ body, .hold-transition, .wrapper {
 
 .navbar-custom-menu .navbar-nav > li > a:hover,
 .navbar-custom-menu .navbar-nav > li.open > a {
-  background: #f1f5f9 !important;
-  color: var(--color-primary) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
 }
 
 /* Bell Notification Pill */
@@ -211,14 +209,14 @@ body, .hold-transition, .wrapper {
   display: flex !important;
   align-items: center;
   justify-content: center;
-  background: #f8fafc;
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff !important;
 }
 
 .navbar-nav > .messages-menu > a:hover {
-  background: var(--color-primary-light) !important;
-  color: var(--color-primary) !important;
-  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .navbar-nav > .messages-menu > a .label {
@@ -226,12 +224,12 @@ body, .hold-transition, .wrapper {
   top: -3px;
   right: -3px;
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-  border: 2px solid #ffffff;
+  border: 2px solid #0f172a;
   border-radius: var(--radius-full);
   font-size: 10px;
   font-weight: 700;
   padding: 3px 6px;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
   animation: pulseGlow 2s infinite;
 }
 
@@ -239,23 +237,24 @@ body, .hold-transition, .wrapper {
 .navbar-nav > .user-menu > a {
   padding: 6px 14px 6px 8px !important;
   border-radius: var(--radius-full) !important;
-  background: #f8fafc;
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   display: flex;
   align-items: center;
   gap: 10px;
+  color: #ffffff !important;
 }
 
 .navbar-nav > .user-menu > a:hover {
-  background: #f1f5f9 !important;
-  border-color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .navbar-nav > .user-menu > a > img {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  border: 2px solid var(--color-primary);
+  border: 2px solid #38bdf8;
   margin: 0;
 }
 
@@ -265,7 +264,7 @@ body, .hold-transition, .wrapper {
 }
 
 .navbar-nav > .user-menu > .dropdown-menu > .user-header {
-  background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
+  background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 100%) !important;
   padding: 24px 16px;
   text-align: center;
 }
@@ -274,7 +273,7 @@ body, .hold-transition, .wrapper {
   width: 72px;
   height: 72px;
   border: 3px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .navbar-nav > .user-menu > .dropdown-menu > .user-header > p {
@@ -334,7 +333,7 @@ body, .hold-transition, .wrapper {
 }
 
 /* ==========================================================================
-   FIXED Sidebar Modern Styling (Does not scroll with body)
+   Sidebar Modern Color Combination & Styling
    ========================================================================== */
 .main-sidebar {
   position: fixed !important;
@@ -348,7 +347,8 @@ body, .hold-transition, .wrapper {
   z-index: 1020 !important;
   padding-top: 60px !important;
   background: var(--color-sidebar-bg) !important;
-  box-shadow: 4px 0 25px rgba(0, 0, 0, 0.12);
+  box-shadow: 4px 0 25px rgba(0, 0, 0, 0.25);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -358,9 +358,11 @@ body, .hold-transition, .wrapper {
 }
 
 .user-panel {
-  padding: 20px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  margin-bottom: 15px;
+  padding: 18px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-md);
+  margin: 15px 12px 18px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -372,7 +374,7 @@ body, .hold-transition, .wrapper {
   border-radius: 50%;
   border: 2px solid #38bdf8 !important;
   padding: 2px;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
   transition: transform var(--transition-bounce);
 }
 
@@ -386,10 +388,10 @@ body, .hold-transition, .wrapper {
 }
 
 .user-panel .info p {
-  color: #f8fafc;
+  color: #ffffff;
   font-weight: 700;
   font-size: 14px;
-  margin: 0 0 4px 0;
+  margin: 0 0 3px 0;
   letter-spacing: 0.3px;
 }
 
@@ -429,7 +431,7 @@ body, .hold-transition, .wrapper {
   letter-spacing: 0.2px;
   display: flex;
   align-items: center;
-  border-left: none !important;
+  border-left: 3px solid transparent !important;
 }
 
 .sidebar-menu > li > a > i {
@@ -442,8 +444,9 @@ body, .hold-transition, .wrapper {
 }
 
 .sidebar-menu > li:hover > a {
-  background: rgba(255, 255, 255, 0.06) !important;
+  background: rgba(99, 102, 241, 0.16) !important;
   color: #ffffff !important;
+  border-left-color: #38bdf8 !important;
   transform: translateX(4px);
 }
 
@@ -453,9 +456,10 @@ body, .hold-transition, .wrapper {
 }
 
 .sidebar-menu > li.active > a {
-  background: linear-gradient(90deg, #4f46e5 0%, #3b82f6 100%) !important;
+  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%) !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+  border-left-color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.35);
 }
 
 .sidebar-menu > li.active > a > i {
@@ -463,11 +467,11 @@ body, .hold-transition, .wrapper {
 }
 
 .sidebar-menu .treeview-menu {
-  background: rgba(0, 0, 0, 0.2) !important;
+  background: rgba(0, 0, 0, 0.35) !important;
   border-radius: var(--radius-sm);
   padding: 6px 8px;
   margin: 4px 0 6px 0;
-  border-left: 2px solid rgba(79, 70, 229, 0.4);
+  border-left: 2px solid #6366f1;
 }
 
 .sidebar-menu .treeview-menu > li {
@@ -494,7 +498,7 @@ body, .hold-transition, .wrapper {
 
 .sidebar-menu .treeview-menu > li > a:hover {
   color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
   padding-left: 16px !important;
 }
 
@@ -506,7 +510,7 @@ body, .hold-transition, .wrapper {
 
 .sidebar-menu .treeview-menu > li.active > a {
   color: #ffffff !important;
-  background: rgba(79, 70, 229, 0.25) !important;
+  background: rgba(99, 102, 241, 0.3) !important;
   font-weight: 600;
 }
 
