@@ -29,6 +29,9 @@
                     <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-filter"></i> Filter</button>
                     <a href="{{ route('ledgers.client') }}" class="btn btn-default btn-sm"><i class="fa fa-refresh"></i> Reset</a>
                     <button type="button" onclick="window.print()" class="btn btn-success btn-sm pull-right"><i class="fa fa-print"></i> Print</button>
+                    @if(!empty($clientName))
+                        <a href="{{ route('ledgers.client-print', ['client' => $clientName, 'from' => $fromDate ?: date('Y-m-d', strtotime('-1 year')), 'to' => $toDate ?: date('Y-m-d')]) }}" target="_blank" class="btn btn-info btn-sm pull-right" style="margin-right: 5px;"><i class="fa fa-file-text-o"></i> Print Statement</a>
+                    @endif
                 </form>
             </div>
             <div class="box-body">

@@ -77,7 +77,9 @@ Route::middleware(['auth'])->group(function () {
 
     // All Ledgers
     Route::get('ledger/client', [LedgerController::class, 'clientLedger'])->name('ledgers.client');
+    Route::get('ledger/client-print', [LedgerController::class, 'clientLedgerPrint'])->name('ledgers.client-print');
     Route::get('ledger/supplier', [LedgerController::class, 'supplierLedger'])->name('ledgers.supplier');
+    Route::get('ledger/supplier-print', [LedgerController::class, 'supplierLedgerPrint'])->name('ledgers.supplier-print');
     Route::get('ledger/project', [LedgerController::class, 'projectLedger'])->name('ledgers.project');
     Route::get('ledger/loan', [LedgerController::class, 'loanLedger'])->name('ledgers.loan');
     Route::get('ledger/office-expense', [LedgerController::class, 'officeExpenseLedger'])->name('ledgers.office_expense');

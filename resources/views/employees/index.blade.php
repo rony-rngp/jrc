@@ -38,6 +38,7 @@
                         <td>{{ $emp->position }}</td>
                         <td style="color:#00a65a; font-weight:bold;">৳ {{ number_format($gross, 2) }}</td>
                         <td>
+                            <a href="{{ route('employees.show', $emp->id) }}" target="_blank" class="btn btn-info btn-sm btn-flat"><i class="fa fa-print"></i> Profile</a>
                             <a href="{{ route('employees.edit', $emp->id) }}" class="btn btn-success btn-sm btn-flat"><i class="fa fa-edit"></i> Edit</a>
                             <form action="{{ route('employees.destroy', $emp->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this employee?');">
                                 @csrf

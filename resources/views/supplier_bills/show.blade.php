@@ -26,14 +26,6 @@
         .invoice-container .logo-container {
             margin: 0 !important;
             border-radius: 0 !important;
-            padding: 0;
-            border-bottom: 2px solid #eee;
-            overflow: hidden;
-        }
-        .logo-container img {
-            width: 100%;
-            height: auto;
-            display: block;
         }
         
         .main-title {
@@ -183,9 +175,7 @@
     
     <div class="stamp {{ strtolower($status) }}">{{ $status }}</div>
 
-    <div class="logo-container">
-        <img src="{{ asset('img/logo.jpg') }}" alt="Company Logo" onerror="this.onerror=null; this.src='/img/logo.jpg';">
-    </div>
+    @include('layouts.voucher_logo')
 
     <h2 class="main-title">Purchase Bill</h2>
 
@@ -195,12 +185,13 @@
             <table class="meta-table">
                 <tr>
                     <td><strong>Bill No:</strong></td>
-                    <td>#{{ str_pad($bill->id, 5, '0', STR_PAD_LEFT) }}</td>
+                    <td>{{ str_pad($bill->id, 5, '0', STR_PAD_LEFT) }}</td>
                 </tr>
                 <tr>
                     <td><strong>Voucher:</strong></td>
                     <td>{{ $bill->voucher_no }}</td>
                 </tr>
+                
                 <tr>
                     <td><strong>Bill Type:</strong></td>
                     <td>{{ $bill->bill_type }}</td>
@@ -214,34 +205,40 @@
         <div class="meta-box">
             <h4>Supplier / Party Info</h4>
             <table class="meta-table">
+
                 <tr>
                     <td><strong>Project Name:</strong></td>
                     <td>{{ $project->project_name ?? 'N/A' }}</td>
                 </tr>
+                
                 <tr>
                     <td><strong>Supplier Name:</strong></td>
                     <td style="font-size: 16px; font-weight: bold; color: #2c3e50;">
                         {{ $bill->supplier_id == 'Cash Purchase' ? 'Cash Purchase (নগদ ক্রয়)' : ($supplier->party_name ?? $bill->supplier_id) }}
                     </td>
                 </tr>
+
                 @if(!empty($supplier->party_phone))
                 <tr>
                     <td><strong>Mobile No:</strong></td>
                     <td>{{ $supplier->party_phone }}</td>
                 </tr>
                 @endif
+
                 <tr>
                     <td><strong>Status:</strong></td>
                     <td style="font-weight:bold; font-size:16px;" class="{{ $status == 'PAID' ? 'text-paid' : 'text-due' }}">
                         {{ $status }}
                     </td>
                 </tr>
+                
                 @if(!empty($pay_method))
                 <tr>
                     <td><strong>Method:</strong></td>
                     <td>{{ $pay_method }}</td>
                 </tr>
                 @endif
+
                 @if(!empty($trx_id))
                 <tr>
                     <td><strong>Trx/Check No:</strong></td>
@@ -264,19 +261,18 @@
                 </tr>
             </thead>
             <tbody>
-                @if(count($bill->items) > 0)
-                    @foreach($bill->items as $sl => $item)
+                @php $sl = 1; @endphp
+                @forelse($bill->items as $item)
                     <tr>
-                        <td class="text-center">{{ $sl + 1 }}</td>
-                        <td><strong>{{ $item->category->cat_name ?? ('Material #' . $item->product_id) }}</strong></td>
+                        <td class="text-center">{{ $sl++ }}</td>
+                        <td><strong>{{ $item->category->cat_name ?? 'Item' }}</strong></td>
                         <td class="text-center">{{ $item->qty }}</td>
-                        <td class="text-right">{{ number_format($item->unit_price, 2) }}</td>
-                        <td class="text-right">{{ number_format($item->total_price, 2) }}</td>
+                        <td class="text-right">{{ number_format((float)$item->unit_price, 2) }}</td>
+                        <td class="text-right">{{ number_format((float)$item->total_price, 2) }}</td>
                     </tr>
-                    @endforeach
-                @else
+                @empty
                     <tr><td colspan="5" class="text-center">No items found in this bill.</td></tr>
-                @endif
+                @endforelse
             </tbody>
         </table>
     </div>
@@ -285,7 +281,7 @@
         <div class="notes-box">
             <strong style="color: #d35400;">Remarks / Note:</strong><br>
             <span style="color: #555; line-height: 1.5;">
-                {!! !empty($bill->note) ? nl2br(e($bill->note)) : "No remarks available for this bill." !!}
+                {!! !empty($bill->note) ? nl2br(e($bill->note)) : 'No remarks available for this bill.' !!}
             </span>
         </div>
         
@@ -293,15 +289,15 @@
             <table class="summary-table">
                 <tr class="row-total">
                     <th>Grand Total:</th>
-                    <td>৳ {{ number_format($bill->grand_total, 2) }}</td>
+                    <td>৳ {{ number_format((float)$bill->grand_total, 2) }}</td>
                 </tr>
                 <tr>
                     <th>Paid Amount:</th>
-                    <td class="text-paid">৳ {{ number_format($real_paid, 2) }}</td>
+                    <td class="text-paid">৳ {{ number_format((float)$real_paid, 2) }}</td>
                 </tr>
                 <tr>
                     <th>Total Due:</th>
-                    <td class="text-due">৳ {{ number_format($real_due, 2) }}</td>
+                    <td class="text-due">৳ {{ number_format((float)$real_due, 2) }}</td>
                 </tr>
             </table>
         </div>

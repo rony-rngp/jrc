@@ -5,7 +5,7 @@
     <title>Print Bill - {{ $bill->project_name }}</title>
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
     <style>
         body { font-family: 'Open Sans', sans-serif; background: #525659; margin: 0; padding: 20px; }
         .invoice-box {
@@ -21,27 +21,11 @@
             position: relative;
         }
         
-        .bill-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #333;
-            padding-bottom: 12px;
-            margin-bottom: 15px;
+        .invoice-box .logo-container {
+            margin: -30px -30px 20px -30px !important;
+            border-radius: 0 !important;
         }
-        .bill-header .company-title {
-            font-size: 26px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .bill-header .company-sub {
-            font-size: 12px;
-            color: #666;
-            margin: 0;
-        }
+
         .bill-title { 
             text-align: center; 
             margin: 10px 0 20px 0; 
@@ -81,20 +65,11 @@
 </head>
 <body>
 
-<button class="btn-print" onclick="window.print()"><i class="fa fa-print"></i> Print Bill</button>
+<button class="btn-print" onclick="window.print()">Print Bill</button>
 
 <div class="invoice-box">
     
-    <div class="bill-header">
-        <div>
-            <h1 class="company-title">JR Corporation</h1>
-            <p class="company-sub">Project Construction, Engineering & Materials Supply</p>
-        </div>
-        <div style="text-align: right; font-size: 12px; color: #555;">
-            <b>Head Office:</b> Dhaka, Bangladesh<br>
-            <b>Email:</b> info@jrcbd.com | <b>Web:</b> jrcorporationbd.com
-        </div>
-    </div>
+    @include('layouts.voucher_logo')
 
     <div class="bill-title">{{ $stage }}</div>
 
@@ -115,7 +90,7 @@
             <td class="info-label">Bill Stage</td>
             <td>: <b>{{ $stage }}</b></td>
             <td class="info-label">Currency</td>
-            <td>: <b>BDT (৳)</b></td>
+            <td>: <b>BDT</b></td>
         </tr>
         <tr>
             <td class="info-label">Payment Status</td>
@@ -150,14 +125,14 @@
                         <td>{{ $item['type'] }}</td>
                         <td>{!! $item['desc'] !!}</td>
                         @if($index == 0)
-                            <td rowspan="{{ $rowCount }}" class="text-right" style="vertical-align: middle; font-weight: bold; font-size: 18px; color: #2c3e50; background: #fafafa;">৳ {{ number_format($billAmount, 2) }}</td>
+                            <td rowspan="{{ $rowCount }}" class="text-right" style="vertical-align: middle; font-weight: bold; font-size: 18px; color: #2c3e50; background: #fafafa;"> {{ number_format($billAmount, 2) }}</td>
                         @endif
                     </tr>
                 @endforeach
             @else
                 <tr>
                     <td colspan="3" class="text-center">No detailed breakdown found.</td>
-                    <td class="text-right" style="font-weight: bold; font-size: 16px;">৳ {{ number_format($billAmount, 2) }}</td>
+                    <td class="text-right" style="font-weight: bold; font-size: 16px;"> {{ number_format($billAmount, 2) }}</td>
                 </tr>
             @endif
         </tbody>
@@ -166,13 +141,13 @@
             @if($stage == 'Final Bill' || $discount > 0)
             <tr>
                 <td colspan="3" class="text-right" style="font-weight:bold; color:#e74c3c;">Discount Applied :</td>
-                <td class="text-right" style="color:#e74c3c; font-weight:bold;">- ৳ {{ number_format($discount, 2) }}</td>
+                <td class="text-right" style="color:#e74c3c; font-weight:bold;">- {{ number_format($discount, 2) }}</td>
             </tr>
             @endif
 
             <tr class="net-row">
                 <td colspan="3" class="text-right">Net Payable Amount :</td>
-                <td class="text-right">৳ {{ number_format($netAmount, 2) }}</td>
+                <td class="text-right">{{ number_format($netAmount, 2) }}</td>
             </tr>
         </tfoot>
     </table>
@@ -184,10 +159,5 @@
     </div>
 </div>
 
-<script>
-    window.onload = function() {
-        // window.print();
-    };
-</script>
 </body>
 </html>
