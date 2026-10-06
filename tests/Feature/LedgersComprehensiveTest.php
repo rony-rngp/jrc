@@ -41,6 +41,8 @@ class LedgersComprehensiveTest extends TestCase
         $client = Client::first();
         $res = $this->get('/ledger/client');
         $res->assertStatus(200);
+        $res->assertSee('active menu-open');
+        $res->assertSee('Client Ledger');
 
         if ($client) {
             $res = $this->get('/ledger/client?client_name=' . urlencode($client->company_name) . '&from_date=2025-01-01&to_date=' . date('Y-m-d') . '&view_ledger=1');
