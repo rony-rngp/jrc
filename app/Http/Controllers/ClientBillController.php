@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\PaymentMethod;
 use App\Models\SupplierBill;
 use App\Models\GeneralTransaction;
+use App\Models\ProjectExpense;
 use App\Helpers\ActivityLogger;
 use Illuminate\Support\Facades\DB;
 
