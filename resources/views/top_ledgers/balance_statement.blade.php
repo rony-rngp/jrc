@@ -6,15 +6,63 @@
 @push('styles')
 <style>
     @media print {
-        .NoPrint { display: none !important; }
-        .content-wrapper { margin-left: 0 !important; background-color: #fff !important; }
-        .box { border: none !important; box-shadow: none !important; }
-        body { background-color: #fff !important; }
-        .table-striped>tbody>tr:nth-of-type(odd) { background-color: transparent !important; }
-        .table-hover>tbody>tr:hover { background-color: transparent !important; }
-        .alert { display: none !important; }
-        .print-footer { display: block !important; }
-        .main-footer { display: none !important; }
+        @page {
+            size: auto;
+            margin: 10mm 15mm;
+        }
+        html, body {
+            background-color: #fff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .NoPrint, .no-print, .main-header, .main-sidebar, .content-header, .main-footer, .search-box, .btn {
+            display: none !important;
+        }
+        .content-wrapper {
+            margin: 0 !important;
+            margin-top: 0 !important;
+            margin-left: 0 !important;
+            padding: 0 !important;
+            background-color: #fff !important;
+            min-height: auto !important;
+            animation: none !important;
+        }
+        .content {
+            padding: 0 !important;
+            margin: 0 !important;
+            animation: none !important;
+        }
+        .box {
+            border: none !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+        }
+        .box-body {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .report-header {
+            margin-top: 0 !important;
+            margin-bottom: 25px !important;
+        }
+        .report-header h2 {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        .table-striped>tbody>tr:nth-of-type(odd) {
+            background-color: transparent !important;
+        }
+        .table-hover>tbody>tr:hover {
+            background-color: transparent !important;
+        }
+        .alert {
+            display: none !important;
+        }
+        .print-footer {
+            display: block !important;
+        }
     }
 </style>
 @endpush

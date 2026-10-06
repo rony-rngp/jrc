@@ -1208,3 +1208,68 @@ label {
     margin-bottom: 10px;
   }
 }
+
+/* ==========================================================================
+   Global Print Styles
+   ========================================================================== */
+@media print {
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 11pt;
+  }
+
+  .main-header,
+  .main-sidebar,
+  .content-header,
+  .main-footer,
+  .search-box,
+  .no-print,
+  .NoPrint,
+  .btn,
+  .alert,
+  .modal {
+    display: none !important;
+  }
+
+  .content-wrapper {
+    margin: 0 !important;
+    margin-top: 0 !important;
+    margin-left: 0 !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    background: transparent !important;
+    animation: none !important;
+  }
+
+  .content {
+    margin: 0 !important;
+    padding: 0 !important;
+    animation: none !important;
+  }
+
+  .box {
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  .box-body {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .table-responsive {
+    overflow: visible !important;
+  }
+
+  @page {
+    size: auto;
+    margin: 10mm 15mm;
+  }
+}
