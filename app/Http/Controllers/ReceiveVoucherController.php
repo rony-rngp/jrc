@@ -187,6 +187,11 @@ class ReceiveVoucherController extends Controller
         return view('receive_vouchers.index', compact('recentTransactions', 'clients', 'loanHeads'));
     }
 
+    public function create()
+    {
+        return redirect()->route('receive-vouchers.index');
+    }
+
     public function store(Request $request)
     {
         if ($request->has('ajax_request') || $request->ajax()) {
@@ -197,7 +202,7 @@ class ReceiveVoucherController extends Controller
         $user_role = $user->role ?? 1;
         $approval_status = ($user_role == 1) ? 'Approved' : 'Pending';
 
-        $voucher = $request->input('voucher') ?? $request->input('check_no') ?? ('REC-' . strtoupper(uniqid()));
+        $voucher = $request->input('voucher') ?? $request->input('voucher_no') ?? $request->input('check_no') ?? ('REC-' . strtoupper(uniqid()));
         $receive_type = $request->input('receive_type', 'Others');
         $t_date = $request->input('t_date') ?? $request->input('date') ?? date('Y-m-d');
         $amount = (float)($request->input('amount') ?? $request->input('pay_amount') ?? 0);
@@ -273,6 +278,7 @@ class ReceiveVoucherController extends Controller
                     'fund_recev' => $fund_recev,
                     'name' => 'Voucher: ' . $voucher,
                     'method_name' => $method_name,
+                    'bill_amount' => 0,
                     'pay_amount' => $amount,
                     'sender_bank' => $sender_bank,
                     'trans_type' => $trans_type,

@@ -14,6 +14,11 @@ class SupplierController extends Controller
         return view('suppliers.index', compact('suppliers'));
     }
 
+    public function create()
+    {
+        return redirect()->route('suppliers.index');
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -42,6 +47,11 @@ class SupplierController extends Controller
         ActivityLogger::log('Create', "Added supplier: {$party_name}");
 
         return redirect()->route('suppliers.index')->with('success', 'Supplier added successfully.');
+    }
+
+    public function show($id)
+    {
+        return $this->edit($id);
     }
 
     public function edit($id)

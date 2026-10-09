@@ -14,6 +14,11 @@ class PaymentMethodController extends Controller
         return view('payment_methods.index', compact('methods'));
     }
 
+    public function create()
+    {
+        return redirect()->route('payment-methods.index');
+    }
+
     public function store(Request $request)
     {
         $request->validate(['method_name' => 'required']);
@@ -29,6 +34,18 @@ class PaymentMethodController extends Controller
         ActivityLogger::log('Create', "Added payment method: {$pm->method_name}");
 
         return redirect()->route('payment-methods.index')->with('success', 'Payment Method added successfully.');
+    }
+
+    public function show($id)
+    {
+        return redirect()->route('payment-methods.index');
+    }
+
+    public function edit($id)
+    {
+        $method = PaymentMethod::findOrFail($id);
+        $methods = PaymentMethod::orderBy('id', 'desc')->get();
+        return view('payment_methods.index', compact('methods', 'method'));
     }
 
     public function update(Request $request, $id)

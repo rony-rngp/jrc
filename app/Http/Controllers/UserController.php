@@ -15,6 +15,11 @@ class UserController extends Controller
         return view('users.index', compact('users'));
     }
 
+    public function create()
+    {
+        return redirect()->route('users.index');
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -44,6 +49,18 @@ class UserController extends Controller
         ActivityLogger::log('Create', "Added user {$user->username}");
 
         return redirect()->route('users.index')->with('success', 'User created successfully.');
+    }
+
+    public function show($id)
+    {
+        return redirect()->route('users.index');
+    }
+
+    public function edit($id)
+    {
+        $user = Admin::findOrFail($id);
+        $users = Admin::orderBy('id', 'desc')->get();
+        return view('users.index', compact('users', 'user'));
     }
 
     public function update(Request $request, $id)

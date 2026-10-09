@@ -26,7 +26,7 @@ Route::get('/', function () {
 });
 
 // Authentication routes (Login, Logout)
-Auth::routes(['register' => false, 'reset' => false, 'verify' => false]);
+Auth::routes(['register' => false, 'reset' => false, 'verify' => false, 'confirm' => false]);
 
 // Public / Realtime AJAX Check
 Route::match(['get', 'post'], 'projects/check-name', [ProjectController::class, 'checkName'])->name('projects.check-name');

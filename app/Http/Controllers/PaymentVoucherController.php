@@ -233,6 +233,11 @@ class PaymentVoucherController extends Controller
         return view('payment_vouchers.index', compact('mainPaymentHeads', 'suppliers', 'loanHeads', 'projects', 'recentTransactions'));
     }
 
+    public function create()
+    {
+        return redirect()->route('payment-vouchers.index');
+    }
+
     public function store(Request $request)
     {
         if ($request->has('ajax_request') || $request->ajax()) {
@@ -247,7 +252,7 @@ class PaymentVoucherController extends Controller
         $amount = (float)($request->input('amount') ?? $request->input('pay_amount') ?? 0);
         $deposit_category = $request->input('deposit_category');
         $method_id = (int)$request->input('method_id');
-        $voucher = $request->input('voucher') ?? $request->input('check_no') ?? ('PAY-' . strtoupper(uniqid()));
+        $voucher = $request->input('voucher') ?? $request->input('voucher_no') ?? $request->input('check_no') ?? ('PAY-' . strtoupper(uniqid()));
         $t_date = $request->input('t_date') ?? $request->input('pay_date') ?? date('Y-m-d');
         $note = $request->input('note') ?? $request->input('pay_note') ?? '';
 
@@ -275,7 +280,13 @@ class PaymentVoucherController extends Controller
         DB::beginTransaction();
         try {
             if ($payment_type == 'Supplier') {
-                $supplier_id = $request->input('supplier_id');
+                $supplier_id = $request->input('supplier_id') ?? $request->input('supplier_name');
+                if (!is_numeric($supplier_id) && !empty($supplier_id)) {
+                    $foundSupplier = \App\Models\Party::where('party_name', $supplier_id)->first();
+                    if ($foundSupplier) {
+                        $supplier_id = $foundSupplier->id;
+                    }
+                }
                 $pay_mode = $request->input('supplier_pay_mode', 'Project');
                 $project_id = ($pay_mode == 'Project' && $request->filled('supplier_project_id')) ? (int)$request->input('supplier_project_id') : 0;
                 $bill_id = (int)$request->input('supplier_bill_id', 0);

@@ -275,6 +275,11 @@ class ClientBillController extends Controller
         return view('client_bills.show', compact('bill', 'stage', 'clean_note', 'breakdown_items', 'discount', 'billAmount', 'netAmount'));
     }
 
+    public function edit($id)
+    {
+        return $this->show($id);
+    }
+
     public function destroy($id)
     {
         $bill = SalesGenerate::findOrFail($id);

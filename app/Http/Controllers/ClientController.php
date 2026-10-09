@@ -16,6 +16,11 @@ class ClientController extends Controller
         return view('clients.index', compact('clients'));
     }
 
+    public function create()
+    {
+        return redirect()->route('clients.index');
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -59,6 +64,11 @@ class ClientController extends Controller
         ActivityLogger::log('Create', "Added client: {$company_name}");
 
         return redirect()->route('clients.index')->with('success', 'Client added successfully.');
+    }
+
+    public function show($id)
+    {
+        return $this->edit($id);
     }
 
     public function edit($id)

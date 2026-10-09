@@ -17,6 +17,11 @@ class ProjectController extends Controller
         return view('projects.index', compact('projects', 'clients'));
     }
 
+    public function create()
+    {
+        return redirect()->route('projects.index');
+    }
+
     public function checkName(Request $request)
     {
         $projectName = trim($request->input('project_name', ''));
@@ -66,6 +71,11 @@ class ProjectController extends Controller
         ActivityLogger::log('Create', "Added new project: {$project_name}");
 
         return redirect()->route('projects.index')->with('success', 'Project added successfully.');
+    }
+
+    public function show($id)
+    {
+        return $this->edit($id);
     }
 
     public function edit($id)

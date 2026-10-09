@@ -19,6 +19,11 @@ class AccountHeadController extends Controller
         ]);
     }
 
+    public function create()
+    {
+        return redirect()->route('account-heads.index');
+    }
+
     private function buildHierarchy($heads, $parentId = 0, $level = 0)
     {
         $result = [];
@@ -50,6 +55,19 @@ class AccountHeadController extends Controller
         ActivityLogger::log('Create', "Added account head: {$head->head_name}");
 
         return redirect()->route('account-heads.index')->with('success', 'Account Head added successfully.');
+    }
+
+    public function show($id)
+    {
+        return redirect()->route('account-heads.index');
+    }
+
+    public function edit($id)
+    {
+        $head = AccountHead::findOrFail($id);
+        $allHeads = AccountHead::orderBy('head_name', 'asc')->get();
+        $heads = $this->buildHierarchy($allHeads);
+        return view('account_heads.index', compact('heads', 'allHeads', 'head'));
     }
 
     public function update(Request $request, $id)

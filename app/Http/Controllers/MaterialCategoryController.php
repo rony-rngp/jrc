@@ -14,6 +14,11 @@ class MaterialCategoryController extends Controller
         return view('categories.index', compact('categories'));
     }
 
+    public function create()
+    {
+        return redirect()->route('categories.index');
+    }
+
     public function store(Request $request)
     {
         $request->validate(['cat_name' => 'required']);
@@ -27,6 +32,18 @@ class MaterialCategoryController extends Controller
         ActivityLogger::log('Create', "Added product category: {$cat->cat_name}");
 
         return redirect()->route('categories.index')->with('success', 'Product / Category added successfully.');
+    }
+
+    public function show($id)
+    {
+        return redirect()->route('categories.index');
+    }
+
+    public function edit($id)
+    {
+        $category = MaterialCategory::findOrFail($id);
+        $categories = MaterialCategory::orderBy('id', 'desc')->get();
+        return view('categories.index', compact('categories', 'category'));
     }
 
     public function update(Request $request, $id)

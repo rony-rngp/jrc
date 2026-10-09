@@ -42,6 +42,11 @@ class BalanceTransferController extends Controller
         return view('balance_transfers.index', compact('transfers'));
     }
 
+    public function create()
+    {
+        return redirect()->route('balance-transfers.index');
+    }
+
     public function store(Request $request)
     {
         if ($request->has('ajax_request') || $request->ajax()) {
@@ -202,6 +207,11 @@ class BalanceTransferController extends Controller
         }
 
         return view('balance_transfers.show', compact('voucher', 'date', 'amount', 'from_account', 'to_account', 'trx_info', 'remarks_info'));
+    }
+
+    public function edit($id)
+    {
+        return $this->show($id);
     }
 
     public function destroy($id, Request $request)
