@@ -276,6 +276,8 @@
                                 <td class='text-bold text-green'>{{ number_format($amt, 2) }}</td>
                                 <td>{!! $status_badge_html !!}</td>
                                 <td>
+                                    <a href="{{ route('receive-vouchers.show', $row->id) }}?type={{ $row->type }}" class="btn btn-info btn-xs btn-flat" title="View Details"><i class="fa fa-eye"></i> View</a>
+                                    <a href="{{ route('receive-vouchers.show', $row->id) }}?type={{ $row->type }}&print=1" target="_blank" class="btn btn-primary btn-xs btn-flat" title="Print"><i class="fa fa-print"></i> Print</a>
                                     <a href="{{ route('receive-vouchers.edit', $row->id) }}?type={{ $row->type }}" class="btn btn-warning btn-xs btn-flat" title="Edit"><i class="fa fa-edit"></i> Edit</a>
                                     <form action="{{ route('receive-vouchers.destroy', $row->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to reverse and delete this transaction?');">
                                         @csrf
@@ -283,7 +285,6 @@
                                         <input type="hidden" name="type" value="{{ $row->type }}">
                                         <button type="submit" class="btn btn-danger btn-xs btn-flat" title="Delete"><i class="fa fa-trash"></i> Delete</button>
                                     </form>
-                                    <a href="{{ route('receive-vouchers.show', $row->id) }}?type={{ $row->type }}" target="_blank" class="btn btn-default btn-xs btn-flat" title="Print"><i class="fa fa-print"></i> Print</a>
                                 </td>
                             </tr>
                         @endforeach

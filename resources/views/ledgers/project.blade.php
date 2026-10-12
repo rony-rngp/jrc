@@ -56,13 +56,132 @@
     .cashflow-info { background: #f4f7f9; padding: 10px 15px; border-radius: 5px; display: inline-block; font-size: 13px; font-weight: bold; color: #555; margin-top: 10px; border: 1px solid #ddd; }
 
     @media print {
-        body { background: #fff !important; }
-        .main-header, .main-sidebar, .content-header, .search-box, .btn, .main-footer { display: none !important; }
-        .content-wrapper { margin-left: 0 !important; }
-        .ledger-container { border: none; box-shadow: none; padding: 0; }
-        .summary-card { border: 1px solid #ddd; }
-        .table-ledger thead th { background: #eee !important; color: #000 !important; border: 1px solid #000 !important; }
-        .table-ledger tbody td, .table-ledger tfoot th { border: 1px solid #000 !important; }
+        @page {
+            size: A4;
+            margin: 8mm;
+        }
+        body, html { 
+            background: #fff !important; 
+            color: #000 !important;
+            font-size: 12px !important;
+        }
+        .main-header, .main-sidebar, .content-header, .search-box, .btn, .main-footer, .no-print { 
+            display: none !important; 
+        }
+        .content-wrapper, .wrapper, .content { 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            background: #fff !important;
+            border: none !important;
+        }
+        .ledger-container { 
+            border: none !important; 
+            box-shadow: none !important; 
+            padding: 0 !important; 
+            margin: 0 !important;
+        }
+        .client-header {
+            display: flex !important;
+            justify-content: space-between !important;
+            border-bottom: 2px solid #333 !important;
+            padding-bottom: 12px !important;
+            margin-bottom: 15px !important;
+        }
+        .client-title h2 {
+            font-size: 22px !important;
+            color: #000 !important;
+            margin-bottom: 5px !important;
+        }
+        .client-title p {
+            color: #333 !important;
+            font-size: 13px !important;
+        }
+        .status-box-main {
+            border: 2px solid #333 !important;
+            box-shadow: none !important;
+            padding: 10px 15px !important;
+            min-width: 200px !important;
+            background: #f4f6f7 !important;
+            color: #000 !important;
+        }
+        .status-box-main h4 {
+            color: #333 !important;
+            font-size: 13px !important;
+        }
+        .status-box-main h1 {
+            color: #000 !important;
+            font-size: 24px !important;
+        }
+        .status-box-main small {
+            color: #555 !important;
+        }
+        .summary-row {
+            display: flex !important;
+            gap: 10px !important;
+            margin-bottom: 15px !important;
+        }
+        .summary-card {
+            flex: 1 !important;
+            border: 1px solid #999 !important;
+            padding: 8px 12px !important;
+            box-shadow: none !important;
+            background: #fff !important;
+        }
+        .summary-card .icon {
+            display: none !important;
+        }
+        .summary-card .details p {
+            font-size: 10px !important;
+            color: #555 !important;
+        }
+        .summary-card .details h3 {
+            font-size: 16px !important;
+            margin-top: 2px !important;
+            color: #000 !important;
+        }
+        .table-responsive {
+            overflow: visible !important;
+        }
+        .table-ledger {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            border: 1px solid #000 !important;
+            font-size: 11px !important;
+        }
+        .table-ledger thead th { 
+            background: #e6e6e6 !important; 
+            color: #000 !important; 
+            border: 1px solid #000 !important; 
+            padding: 6px 8px !important;
+            font-size: 11px !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .table-ledger tbody td, .table-ledger tfoot td { 
+            border: 1px solid #666 !important; 
+            padding: 5px 8px !important;
+            font-size: 11px !important;
+        }
+        .table-ledger tfoot tr {
+            background: #eee !important;
+            font-weight: bold !important;
+            border-top: 2px solid #000 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .row-bf {
+            background: #fff9db !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .amt {
+            font-size: 11px !important;
+        }
+        .badge-type {
+            border: 1px solid #999 !important;
+            padding: 1px 4px !important;
+            font-size: 9px !important;
+        }
     }
 </style>
 @endpush
@@ -158,7 +277,7 @@
         </div>
     </div>
 
-    <div style="text-align: right; margin-bottom: 15px;">
+    <div class="no-print" style="text-align: right; margin-bottom: 15px;">
         <button onclick="window.print()" class="btn btn-default btn-lg"><i class="fa fa-print"></i> Print Ledger</button>
     </div>
 

@@ -32,6 +32,7 @@
                 <td>{{ $category->date }}</td>
                 <td>{{ $category->note }}</td>
                 <td>
+                  <a href="{{ route('categories.show', $category->id) }}" class="btn btn-info btn-sm btn-flat"><i class="fa fa-eye"></i> View</a>
                   <a href="#edit_{{ $category->id }}" data-toggle="modal" class="btn btn-success btn-sm btn-flat"><i class="fa fa-edit"></i> Edit</a>
                   <form action="{{ route('categories.destroy', $category->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this category?');">
                     @csrf

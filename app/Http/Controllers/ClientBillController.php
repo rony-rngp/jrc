@@ -272,6 +272,10 @@ class ClientBillController extends Controller
         $billAmount = (float)$bill->bill_amount;
         $netAmount = ((float)$bill->net_amount > 0) ? (float)$bill->net_amount : max(0, $billAmount - $discount);
 
+        if (request()->has('print') || request()->get('view') == 'print') {
+            return view('client_bills.print', compact('bill', 'stage', 'clean_note', 'breakdown_items', 'discount', 'billAmount', 'netAmount'));
+        }
+
         return view('client_bills.show', compact('bill', 'stage', 'clean_note', 'breakdown_items', 'discount', 'billAmount', 'netAmount'));
     }
 

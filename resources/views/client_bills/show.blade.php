@@ -1,163 +1,219 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Print Bill - {{ $bill->project_name }}</title>
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        body { font-family: 'Open Sans', sans-serif; background: #525659; margin: 0; padding: 20px; }
-        .invoice-box {
-            max-width: 800px;
-            margin: auto;
-            padding: 30px;
-            border: 1px solid #eee;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-            font-size: 14px;
-            line-height: 24px;
-            color: #333;
-            background: #fff;
-            position: relative;
-        }
-        
-        .invoice-box .logo-container {
-            margin: -30px -30px 20px -30px !important;
-            border-radius: 0 !important;
-        }
+@extends('layouts.master')
 
-        .bill-title { 
-            text-align: center; 
-            margin: 10px 0 20px 0; 
-            padding: 5px 0; 
-            font-size: 22px; 
-            font-weight: bold; 
-            text-transform: uppercase; 
-            color: #2c3e50;
-            letter-spacing: 1px;
-        }
-        
-        .info-table { width: 100%; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .info-table td { padding: 5px; vertical-align: top; }
-        .info-label { font-weight: bold; color: #555; width: 120px; }
-        
-        .details-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-        .details-table th, .details-table td { padding: 10px; border: 1px solid #ddd; }
-        .details-table th { background: #f4f4f4; text-align: left; font-weight: bold; color: #333; }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        
-        .net-row td { background: #e8f8f5; color: #27ae60; font-size: 16px; font-weight: bold; }
-        
-        .signature-section { width: 100%; margin-top: 50px; display: flex; justify-content: space-between;}
-        .signature-box { width: 30%; text-align: center; border-top: 1px solid #333; padding-top: 5px; font-weight: 600; font-size: 13px;}
-        
-        .note-box { background: #fcfcfc; border-left: 4px solid #f39c12; padding: 10px; margin-bottom: 20px; font-size: 13px; font-style: italic; }
+@section('title', 'Client Bill Details - #' . str_pad($bill->id, 5, '0', STR_PAD_LEFT))
 
-        .btn-print { display: block; width: 150px; margin: 20px auto; padding: 10px; text-align: center; background: #3498db; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; border: none; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+@section('content')
+<section class="content-header">
+    <h1>
+        <i class="fa fa-file-text-o text-primary"></i> Client Bill Details
+        <small>Bill #{{ str_pad($bill->id, 5, '0', STR_PAD_LEFT) }}</small>
+    </h1>
+    <ol class="breadcrumb">
+        <li><a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
+        <li><a href="{{ route('client-bills.index') }}">Client Bills</a></li>
+        <li class="active">Bill #{{ str_pad($bill->id, 5, '0', STR_PAD_LEFT) }}</li>
+    </ol>
+</section>
 
-        @media print {
-            body { background: #fff; padding: 0; }
-            .invoice-box { box-shadow: none; border: none; margin: 0; padding: 30px; width: 100%; }
-            .btn-print { display: none; }
-        }
-    </style>
-</head>
-<body>
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-info-circle"></i> Bill Summary & Actions</h3>
+                    <div class="box-tools pull-right">
+                        <a href="{{ route('client-bills.show', $bill->id) }}?print=1" target="_blank" class="btn btn-primary btn-sm btn-flat">
+                            <i class="fa fa-print"></i> Print Bill
+                        </a>
+                        <a href="{{ route('client-bills.index') }}" class="btn btn-default btn-sm btn-flat">
+                            <i class="fa fa-arrow-left"></i> Back to Bills List
+                        </a>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <!-- Top Metric Cards -->
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="info-box bg-aqua">
+                                <span class="info-box-icon"><i class="fa fa-hashtag"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Bill Number</span>
+                                    <span class="info-box-number">#{{ str_pad($bill->id, 5, '0', STR_PAD_LEFT) }}</span>
+                                    <span class="progress-description">Date: {{ date('d M, Y', strtotime($bill->date)) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="info-box bg-blue">
+                                <span class="info-box-icon"><i class="fa fa-money"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Gross Billed</span>
+                                    <span class="info-box-number">৳ {{ number_format($billAmount, 2) }}</span>
+                                    <span class="progress-description">Stage: {{ $stage }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="info-box {{ $discount > 0 ? 'bg-yellow' : 'bg-gray' }}">
+                                <span class="info-box-icon"><i class="fa fa-tags"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Discount</span>
+                                    <span class="info-box-number">৳ {{ number_format($discount, 2) }}</span>
+                                    <span class="progress-description">{{ $discount > 0 ? 'Deducted from Bill' : 'No Discount' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="info-box bg-green">
+                                <span class="info-box-icon"><i class="fa fa-check-circle"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Net Payable</span>
+                                    <span class="info-box-number">৳ {{ number_format($netAmount, 2) }}</span>
+                                    <span class="progress-description">Status: {{ $bill->payment_status ?? 'Pending' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-<button class="btn-print" onclick="window.print()">Print Bill</button>
+                    <!-- Meta Information -->
+                    <div class="row" style="margin-top: 15px;">
+                        <div class="col-md-6">
+                            <div class="box box-solid box-default">
+                                <div class="box-header with-border bg-gray-light">
+                                    <h3 class="box-title"><i class="fa fa-user text-primary"></i> Client & Project Information</h3>
+                                </div>
+                                <div class="box-body no-padding">
+                                    <table class="table table-bordered table-striped">
+                                        <tr>
+                                            <th style="width: 35%;">Client / Company</th>
+                                            <td><b>{{ $bill->company_name ?: 'N/A' }}</b></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Project Name</th>
+                                            <td><b>{{ $bill->project_name ?: 'N/A' }}</b></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Bill Date</th>
+                                            <td><b>{{ date('d F, Y', strtotime($bill->date)) }}</b></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Bill Stage</th>
+                                            <td><span class="label label-primary" style="font-size:13px;">{{ $stage }}</span></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
 
-<div class="invoice-box">
-    
-    @include('layouts.voucher_logo')
+                        <div class="col-md-6">
+                            <div class="box box-solid box-default">
+                                <div class="box-header with-border bg-gray-light">
+                                    <h3 class="box-title"><i class="fa fa-file-text-o text-success"></i> Payment Status & Remarks</h3>
+                                </div>
+                                <div class="box-body no-padding">
+                                    <table class="table table-bordered table-striped">
+                                        <tr>
+                                            <th style="width: 35%;">Payment Status</th>
+                                            <td>
+                                                <span class="label {{ ($bill->payment_status == 'Paid') ? 'label-success' : 'label-warning' }}">
+                                                    {{ $bill->payment_status ?? 'Pending' }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Currency</th>
+                                            <td><b>BDT (৳)</b></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Remarks / Note</th>
+                                            <td>{{ $clean_note ?: 'No remarks provided.' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Record Created</th>
+                                            <td>{{ $bill->created_at ? $bill->created_at->format('d-m-Y h:i A') : 'N/A' }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-    <div class="bill-title">{{ $stage }}</div>
+                    <!-- Breakdown Table -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="box box-solid box-primary">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title"><i class="fa fa-list-alt"></i> Cost Breakdown Details</h3>
+                                </div>
+                                <div class="box-body table-responsive no-padding">
+                                    <table class="table table-bordered table-hover">
+                                        <thead class="bg-gray">
+                                            <tr>
+                                                <th style="width: 50px;" class="text-center">#</th>
+                                                <th style="width: 150px;">Cost Type</th>
+                                                <th>Description / Particulars</th>
+                                                <th class="text-right" style="width: 200px;">Billed Amount (৳)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @php $rowCount = count($breakdown_items); @endphp
+                                            @if($rowCount > 0)
+                                                @foreach($breakdown_items as $index => $item)
+                                                    <tr>
+                                                        <td class="text-center">{{ $index + 1 }}</td>
+                                                        <td><span class="label label-default">{{ $item['type'] }}</span></td>
+                                                        <td>{!! $item['desc'] !!}</td>
+                                                        @if($index == 0)
+                                                            <td rowspan="{{ $rowCount }}" class="text-right" style="vertical-align: middle; font-weight: bold; font-size: 18px; color: #2c3e50; background: #fafafa;">
+                                                                ৳ {{ number_format($billAmount, 2) }}
+                                                            </td>
+                                                        @endif
+                                                    </tr>
+                                                @endforeach
+                                            @else
+                                                <tr>
+                                                    <td colspan="3" class="text-center text-muted">No detailed breakdown items recorded.</td>
+                                                    <td class="text-right text-bold">৳ {{ number_format($billAmount, 2) }}</td>
+                                                </tr>
+                                            @endif
+                                        </tbody>
+                                        <tfoot class="bg-gray-light">
+                                            <tr>
+                                                <th colspan="3" class="text-right">Gross Total:</th>
+                                                <th class="text-right text-bold" style="font-size: 15px;">৳ {{ number_format($billAmount, 2) }}</th>
+                                            </tr>
+                                            @if($stage == 'Final Bill' || $discount > 0)
+                                            <tr>
+                                                <th colspan="3" class="text-right text-red">Discount Applied:</th>
+                                                <th class="text-right text-bold text-red" style="font-size: 15px;">- ৳ {{ number_format($discount, 2) }}</th>
+                                            </tr>
+                                            @endif
+                                            <tr>
+                                                <th colspan="3" class="text-right text-green">Net Payable Amount:</th>
+                                                <th class="text-right text-bold text-green" style="font-size: 16px;">৳ {{ number_format($netAmount, 2) }}</th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-    <table class="info-table">
-        <tr>
-            <td class="info-label">Bill No</td>
-            <td>: #<b>{{ str_pad($bill->id, 5, "0", STR_PAD_LEFT) }}</b></td>
-            <td class="info-label">Bill Date</td>
-            <td>: <b>{{ date('d F, Y', strtotime($bill->date)) }}</b></td>
-        </tr>
-        <tr>
-            <td class="info-label">Client Name</td>
-            <td>: <b>{{ $bill->company_name }}</b></td>
-            <td class="info-label">Project Name</td>
-            <td>: <b>{{ $bill->project_name }}</b></td>
-        </tr>
-        <tr>
-            <td class="info-label">Bill Stage</td>
-            <td>: <b>{{ $stage }}</b></td>
-            <td class="info-label">Currency</td>
-            <td>: <b>BDT</b></td>
-        </tr>
-        <tr>
-            <td class="info-label">Payment Status</td>
-            <td>: <b>{{ $bill->payment_status ?? 'Pending' }}</b></td>
-            <td></td>
-            <td></td>
-        </tr>
-    </table>
+                    <!-- Footer Actions -->
+                    <div class="row">
+                        <div class="col-md-12 text-right">
+                            <a href="{{ route('client-bills.show', $bill->id) }}?print=1" target="_blank" class="btn btn-primary btn-flat">
+                                <i class="fa fa-print"></i> Print Invoice
+                            </a>
+                            <a href="{{ route('client-bills.index') }}" class="btn btn-default btn-flat">
+                                <i class="fa fa-arrow-left"></i> Back to Bills List
+                            </a>
+                        </div>
+                    </div>
 
-    @if(!empty($clean_note))
-    <div class="note-box">
-        <b>Remarks:</b> {{ $clean_note }}
+                </div>
+            </div>
+        </div>
     </div>
-    @endif
-
-    <h4 style="margin-bottom: 10px; color: #333;">Cost Breakdown Details</h4>
-    <table class="details-table">
-        <thead>
-            <tr>
-                <th width="5%" class="text-center">Sl</th>
-                <th width="15%">Type</th>
-                <th width="60%">Description / Particulars</th>
-                <th width="20%" class="text-right">Billed Amount</th> 
-            </tr>
-        </thead>
-        <tbody>
-            @php $rowCount = count($breakdown_items); @endphp
-            @if($rowCount > 0)
-                @foreach($breakdown_items as $index => $item)
-                    <tr>
-                        <td class="text-center">{{ $index + 1 }}</td>
-                        <td>{{ $item['type'] }}</td>
-                        <td>{!! $item['desc'] !!}</td>
-                        @if($index == 0)
-                            <td rowspan="{{ $rowCount }}" class="text-right" style="vertical-align: middle; font-weight: bold; font-size: 18px; color: #2c3e50; background: #fafafa;"> {{ number_format($billAmount, 2) }}</td>
-                        @endif
-                    </tr>
-                @endforeach
-            @else
-                <tr>
-                    <td colspan="3" class="text-center">No detailed breakdown found.</td>
-                    <td class="text-right" style="font-weight: bold; font-size: 16px;"> {{ number_format($billAmount, 2) }}</td>
-                </tr>
-            @endif
-        </tbody>
-        
-        <tfoot>
-            @if($stage == 'Final Bill' || $discount > 0)
-            <tr>
-                <td colspan="3" class="text-right" style="font-weight:bold; color:#e74c3c;">Discount Applied :</td>
-                <td class="text-right" style="color:#e74c3c; font-weight:bold;">- {{ number_format($discount, 2) }}</td>
-            </tr>
-            @endif
-
-            <tr class="net-row">
-                <td colspan="3" class="text-right">Net Payable Amount :</td>
-                <td class="text-right">{{ number_format($netAmount, 2) }}</td>
-            </tr>
-        </tfoot>
-    </table>
-    
-    <div class="signature-section">
-        <div class="signature-box">Prepared By</div>
-        <div class="signature-box">Authorized Signature</div>
-        <div class="signature-box">Client Signature</div>
-    </div>
-</div>
-
-</body>
-</html>
+</section>
+@endsection

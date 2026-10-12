@@ -39,6 +39,7 @@
                 <td>{{ $supplier->date }}</td>
                 <td>{{ $supplier->note }}</td>
                 <td>
+                  <a href="{{ route('suppliers.show', $supplier->id) }}" class="btn btn-info btn-sm btn-flat"><i class="fa fa-eye"></i> View</a>
                   <a href="{{ route('suppliers.edit', $supplier->id) }}" class="btn btn-success btn-sm btn-flat"><i class="fa fa-edit"></i> Edit</a>
                   <form action="{{ route('suppliers.destroy', $supplier->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this supplier?');">
                     @csrf

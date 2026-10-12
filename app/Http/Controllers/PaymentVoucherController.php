@@ -198,37 +198,63 @@ class PaymentVoucherController extends Controller
         $loanHeads = AccountHead::where('head_type', 'Receive')->orderBy('head_name', 'asc')->get();
         $projects = Project::orderBy('project_name', 'asc')->get();
 
-        // Recent Transactions query (UNION across Supplier, Project, and General)
-        $recentTransactions = DB::select("
-            SELECT 'Supplier' as trans_type, sp.id, sp.t_date, sp.voucher_no, sp.amount, pm.method_name, sp.note, 
-                   CONCAT('Supplier: ', IF(p.party_name IS NOT NULL, p.party_name, IFNULL(sb.supplier_id, 'Cash Purchase'))) as head_title, sp.approval_status 
-            FROM supplier_payments sp 
-            LEFT JOIN payment_method pm ON sp.method_id = pm.id
-            LEFT JOIN party p ON sp.supplier_id = p.id
-            LEFT JOIN supplier_bills sb ON sp.bill_id = sb.id
-            
-            UNION ALL
-            
-            SELECT 'Project' as trans_type, pe.id, pe.t_date, pe.voucher_no, pe.amount, pm.method_name, pe.note, 
-                   CONCAT('Project: ', IFNULL(pr.project_name, 'Unknown')) as head_title, pe.approval_status 
-            FROM project_expenses pe 
-            LEFT JOIN payment_method pm ON pe.method_id = pm.id
-            LEFT JOIN project pr ON pe.project_id = pr.id
-            
-            UNION ALL
-            
-            SELECT 'General' as trans_type, gt.id, gt.t_date, gt.check_no as voucher_no, gt.amount, pm.method_name, gt.note, 
-                   IFNULL((SELECT head_name FROM account_heads WHERE id = gt.head_id), 'General') as head_title, gt.approval_status 
-            FROM general_transactions gt 
-            LEFT JOIN payment_method pm ON gt.method_id = pm.id 
-            WHERE gt.t_type='Payment' 
-            AND gt.note NOT LIKE '%Purchase%' 
-            AND gt.note NOT LIKE '%Cash Purchase%'
-            AND gt.note NOT LIKE '%Transfer%'
-            AND IFNULL((SELECT head_name FROM account_heads WHERE id = gt.head_id), '') NOT LIKE '%Transfer%'
-            
-            ORDER BY t_date DESC, CAST(voucher_no AS UNSIGNED) DESC LIMIT 5000
-        ");
+        $supplierTx = DB::table('supplier_payments as sp')
+            ->leftJoin('payment_method as pm', 'sp.method_id', '=', 'pm.id')
+            ->leftJoin('party as p', 'sp.supplier_id', '=', 'p.id')
+            ->leftJoin('supplier_bills as sb', 'sp.bill_id', '=', 'sb.id')
+            ->select([
+                DB::raw("'Supplier' as trans_type"),
+                'sp.id',
+                'sp.t_date',
+                'sp.voucher_no',
+                'sp.amount',
+                'pm.method_name',
+                'sp.note',
+                DB::raw("CASE WHEN p.party_name IS NOT NULL THEN p.party_name WHEN sb.supplier_id IS NOT NULL THEN sb.supplier_id ELSE 'Cash Purchase' END as head_title"),
+                'sp.approval_status'
+            ]);
+
+        $projectTx = DB::table('project_expenses as pe')
+            ->leftJoin('payment_method as pm', 'pe.method_id', '=', 'pm.id')
+            ->leftJoin('project as pr', 'pe.project_id', '=', 'pr.id')
+            ->select([
+                DB::raw("'Project' as trans_type"),
+                'pe.id',
+                'pe.t_date',
+                'pe.voucher_no',
+                'pe.amount',
+                'pm.method_name',
+                'pe.note',
+                DB::raw("COALESCE(pr.project_name, 'Unknown') as head_title"),
+                'pe.approval_status'
+            ]);
+
+        $generalTx = DB::table('general_transactions as gt')
+            ->leftJoin('payment_method as pm', 'gt.method_id', '=', 'pm.id')
+            ->leftJoin('account_heads as ah', 'gt.head_id', '=', 'ah.id')
+            ->where('gt.t_type', 'Payment')
+            ->where('gt.note', 'not like', '%Purchase%')
+            ->where('gt.note', 'not like', '%Cash Purchase%')
+            ->where('gt.note', 'not like', '%Transfer%')
+            ->where(function($q) {
+                $q->whereNull('ah.head_name')->orWhere('ah.head_name', 'not like', '%Transfer%');
+            })
+            ->select([
+                DB::raw("'General' as trans_type"),
+                'gt.id',
+                'gt.t_date',
+                'gt.check_no as voucher_no',
+                'gt.amount',
+                'pm.method_name',
+                'gt.note',
+                DB::raw("COALESCE(ah.head_name, 'General') as head_title"),
+                'gt.approval_status'
+            ]);
+
+        $recentTransactions = $supplierTx->unionAll($projectTx)->unionAll($generalTx)
+            ->orderBy('t_date', 'desc')
+            ->limit(5000)
+            ->get();
 
         return view('payment_vouchers.index', compact('mainPaymentHeads', 'suppliers', 'loanHeads', 'projects', 'recentTransactions'));
     }
@@ -444,6 +470,14 @@ class PaymentVoucherController extends Controller
             $deposit_category = $r->payment_category;
             $ref_info = $r->ref_no;
             $note = $r->note;
+        }
+
+        if ($request->has('print') || $request->get('view') == 'print') {
+            return view('payment_vouchers.print', compact(
+                'voucher_no', 't_date', 'paid_to', 'payment_type_label', 'amount',
+                'method_name', 'deposit_category', 'ref_info', 'note', 'current_balance_text',
+                'trans_type_val', 'ref_date_val', 'type', 'id'
+            ));
         }
 
         return view('payment_vouchers.show', compact(

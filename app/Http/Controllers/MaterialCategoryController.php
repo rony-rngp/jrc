@@ -36,7 +36,16 @@ class MaterialCategoryController extends Controller
 
     public function show($id)
     {
-        return redirect()->route('categories.index');
+        $category = MaterialCategory::findOrFail($id);
+        $items = \App\Models\SupplierBillItem::with('bill.supplier', 'bill.project')
+            ->where('product_id', $category->id)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $totalQty = (float)$items->sum('qty');
+        $totalAmount = (float)$items->sum('total_price');
+
+        return view('categories.show', compact('category', 'items', 'totalQty', 'totalAmount'));
     }
 
     public function edit($id)

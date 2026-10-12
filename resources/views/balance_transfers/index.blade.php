@@ -151,7 +151,8 @@
                                 <td style="font-weight:bold; color:#00a65a; font-size:16px;">৳ {{ number_format((float)$t->amount, 2) }}</td>
                                 <td>{{ $t->note }}</td>
                                 <td>
-                                    <a href="{{ route('balance-transfers.show', $t->check_no) }}" target="_blank" class="btn btn-primary btn-sm btn-flat" title="Print"><i class="fa fa-print"></i> Print</a>
+                                    <a href="{{ route('balance-transfers.show', $t->check_no) }}" class="btn btn-info btn-sm btn-flat" title="View Details"><i class="fa fa-eye"></i> View</a>
+                                    <a href="{{ route('balance-transfers.show', $t->check_no) }}?print=1" target="_blank" class="btn btn-primary btn-sm btn-flat" title="Print"><i class="fa fa-print"></i> Print</a>
                                     <form method="POST" action="{{ route('balance-transfers.destroy', $t->id) }}" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete this transfer? Balances will be safely reverted.');">
                                         @csrf
                                         @method('DELETE')

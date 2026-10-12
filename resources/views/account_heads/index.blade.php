@@ -68,6 +68,9 @@
                                 </td>
                                 <td>{{ $head->description }}</td>
                                 <td class="text-center">
+                                    <a href="{{ route('account-heads.show', $head->id) }}" class="btn btn-info btn-xs btn-flat" title="View Details">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
                                     <button class="btn btn-success btn-xs edit btn-flat"
                                         data-id="{{ $head->id }}"
                                         data-name="{{ $head->head_name }}"

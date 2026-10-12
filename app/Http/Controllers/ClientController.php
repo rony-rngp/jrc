@@ -68,7 +68,19 @@ class ClientController extends Controller
 
     public function show($id)
     {
-        return $this->edit($id);
+        $client = Client::findOrFail($id);
+        $companyName = $client->company_name;
+
+        $projects = \App\Models\Project::where('company_name', $companyName)->orderBy('id', 'desc')->get();
+        $bills = \App\Models\SalesGenerate::where('company_name', $companyName)->orderBy('date', 'desc')->get();
+        $payments = PaymentReceivedProject::where('company_name', $companyName)->where('type', 'Receive')->orderBy('date', 'desc')->get();
+
+        $opening = (float)$client->opening_balance;
+        $totalBilled = (float)$bills->sum('bill_amount');
+        $totalReceived = (float)$payments->sum('pay_amount');
+        $netDue = ($opening + $totalBilled) - $totalReceived;
+
+        return view('clients.show', compact('client', 'projects', 'bills', 'payments', 'opening', 'totalBilled', 'totalReceived', 'netDue'));
     }
 
     public function edit($id)

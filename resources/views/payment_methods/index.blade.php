@@ -38,6 +38,7 @@
                 </td>
                 <td>{{ $method->note }}</td>
                 <td>
+                  <a href="{{ route('payment-methods.show', $method->id) }}" class="btn btn-info btn-sm btn-flat"><i class="fa fa-eye"></i> View</a>
                   <a href="#edit_{{ $method->id }}" data-toggle="modal" class="btn btn-success btn-sm btn-flat"><i class="fa fa-edit"></i> Edit</a>
                   <form action="{{ route('payment-methods.destroy', $method->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this payment method?');">
                     @csrf

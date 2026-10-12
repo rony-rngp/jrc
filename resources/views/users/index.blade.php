@@ -43,6 +43,7 @@
                             </td>
                             <td>{{ $u->created_on }}</td>
                             <td>
+                                <a href="{{ route('users.show', $u->id) }}" class="btn btn-info btn-xs"><i class="fa fa-eye"></i> View</a>
                                 <a href="#edit_{{ $u->id }}" data-toggle="modal" class="btn btn-success btn-xs"><i class="fa fa-edit"></i> Edit</a>
                                 @if($u->id != Auth::id())
                                 <form action="{{ route('users.destroy', $u->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this user?');">

@@ -75,7 +75,51 @@ class ProjectController extends Controller
 
     public function show($id)
     {
-        return $this->edit($id);
+        $project = Project::findOrFail($id);
+        $client = Client::where('company_name', $project->company_name)->first();
+
+        // 1. Material Bills
+        $supplierBills = \App\Models\SupplierBill::with('items.category', 'supplier')
+            ->where('project_id', $project->id)
+            ->orderBy('bill_date', 'desc')
+            ->get();
+        $totalMaterialCost = (float)$supplierBills->sum('grand_total');
+
+        // 2. Direct Project Expenses
+        $projectExpenses = \App\Models\ProjectExpense::where('project_id', $project->id)
+            ->orderBy('t_date', 'desc')
+            ->get();
+        $totalDirectExpense = (float)$projectExpenses->sum('amount');
+
+        // 3. General Transactions allocated to project
+        $generalExpenses = \App\Models\GeneralTransaction::where('project_id', $project->id)
+            ->where('t_type', 'Payment')
+            ->where('note', 'not like', '%Purchase%')
+            ->where('note', 'not like', '%Cash Purchase%')
+            ->orderBy('t_date', 'desc')
+            ->get();
+        $totalGeneralExpense = (float)$generalExpenses->sum('amount');
+
+        $totalCostIncurred = $totalMaterialCost + $totalDirectExpense + $totalGeneralExpense;
+
+        // 4. Client Bills Generated
+        $clientBills = \App\Models\SalesGenerate::where('project_name', $project->project_name)
+            ->orderBy('date', 'desc')
+            ->get();
+        $totalClientBilled = (float)$clientBills->sum('bill_amount');
+
+        // 5. Client Collections
+        $clientPayments = \App\Models\PaymentReceivedProject::where('project_name', $project->project_name)
+            ->where('type', 'Receive')
+            ->orderBy('date', 'desc')
+            ->get();
+        $totalClientReceived = (float)$clientPayments->sum('pay_amount');
+
+        return view('projects.show', compact(
+            'project', 'client', 'supplierBills', 'projectExpenses', 'generalExpenses',
+            'clientBills', 'clientPayments', 'totalMaterialCost', 'totalDirectExpense',
+            'totalGeneralExpense', 'totalCostIncurred', 'totalClientBilled', 'totalClientReceived'
+        ));
     }
 
     public function edit($id)

@@ -344,6 +344,8 @@
                                 <td class="text-bold text-red">৳ {{ number_format((float)$row->amount, 2) }}</td>
                                 <td>{!! $status_badge_html !!}</td>
                                 <td>
+                                    <a href="{{ route('payment-vouchers.show', $row->id) }}?type={{ $row->trans_type }}" class="btn btn-info btn-xs btn-flat" title="View Details"><i class="fa fa-eye"></i> View</a>
+                                    <a href="{{ route('payment-vouchers.show', $row->id) }}?type={{ $row->trans_type }}&print=1" target="_blank" class="btn btn-primary btn-xs btn-flat" title="Print"><i class="fa fa-print"></i> Print</a>
                                     <a href="{{ route('payment-vouchers.edit', $row->id) }}?type={{ $row->trans_type }}" class="btn btn-warning btn-xs btn-flat" title="Edit"><i class="fa fa-edit"></i> Edit</a>
                                     <form action="{{ route('payment-vouchers.destroy', $row->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to reverse and delete this transaction?');">
                                         @csrf
@@ -351,7 +353,6 @@
                                         <input type="hidden" name="trans_type" value="{{ $row->trans_type }}">
                                         <button type="submit" class="btn btn-danger btn-xs btn-flat" title="Delete"><i class="fa fa-trash"></i> Delete</button>
                                     </form>
-                                    <a href="{{ route('payment-vouchers.show', $row->id) }}?type={{ $row->trans_type }}" target="_blank" class="btn btn-default btn-xs btn-flat" title="Print"><i class="fa fa-print"></i> Print</a>
                                 </td>
                             </tr>
                         @endforeach

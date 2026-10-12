@@ -154,7 +154,7 @@ class ReceiveVoucherController extends Controller
                 'g.id',
                 'g.t_date as date',
                 'g.check_no as voucher',
-                DB::raw("CASE WHEN g.trans_type = 'Transfer' THEN 'Fund Transfer' ELSE CONCAT_WS(' - ', NULLIF(g.main_head, ''), ah.head_name) END as source"),
+                DB::raw("CASE WHEN g.trans_type = 'Transfer' THEN 'Fund Transfer' WHEN g.main_head IS NOT NULL AND g.main_head != '' THEN (g.main_head || ' - ' || ah.head_name) ELSE ah.head_name END as source"),
                 'pm.method_name as account',
                 'g.amount',
                 DB::raw("'Others' as type"),
@@ -168,7 +168,7 @@ class ReceiveVoucherController extends Controller
             ->select([
                 'p.id',
                 'p.date',
-                DB::raw("SUBSTRING_INDEX(p.name, ': ', -1) as voucher"),
+                DB::raw("CASE WHEN p.check_no IS NOT NULL AND p.check_no != '' THEN p.check_no ELSE p.name END as voucher"),
                 'p.company_name as source',
                 'pm.method_name as account',
                 'p.pay_amount as amount',
@@ -423,6 +423,13 @@ class ReceiveVoucherController extends Controller
                     $current_balance_text = "Loan Cleared (৳ 0.00)";
                 }
             }
+        }
+
+        if ($request->has('print') || $request->get('view') == 'print') {
+            return view('receive_vouchers.print', compact(
+                'voucher_no', 't_date', 'received_from', 'receive_type_label',
+                'amount', 'method_name', 'ref_info', 'note', 'current_balance_text', 'type', 'id'
+            ));
         }
 
         return view('receive_vouchers.show', compact(

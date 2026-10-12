@@ -297,7 +297,8 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('supplier-bills.show', $b->id) }}" target="_blank" class="btn btn-primary btn-xs btn-flat" title="Print"><i class="fa fa-print"></i></a>
+                                    <a href="{{ route('supplier-bills.show', $b->id) }}" class="btn btn-info btn-xs btn-flat" title="View Details"><i class="fa fa-eye"></i> View</a>
+                                    <a href="{{ route('supplier-bills.show', $b->id) }}?print=1" target="_blank" class="btn btn-primary btn-xs btn-flat" title="Print" style="margin-left:3px;"><i class="fa fa-print"></i> Print</a>
                                     <a href="{{ route('supplier-bills.edit', $b->id) }}" class="btn btn-success btn-xs btn-flat" title="Edit" style="margin-left:3px;"><i class="fa fa-edit"></i></a>
                                     <form action="{{ route('supplier-bills.destroy', $b->id) }}" method="POST" style="display:inline-block; margin-left:3px;" onsubmit="return confirm('Are you sure you want to delete this Bill? If any payment was made, the account balance will be safely reverted.');">
                                         @csrf

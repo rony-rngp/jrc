@@ -81,6 +81,9 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], 'ledger/supplier', [LedgerController::class, 'supplierLedger'])->name('ledgers.supplier');
     Route::match(['get', 'post'], 'ledger/supplier-print', [LedgerController::class, 'supplierLedgerPrint'])->name('ledgers.supplier-print');
     Route::match(['get', 'post'], 'ledger/project', [LedgerController::class, 'projectLedger'])->name('ledgers.project');
+    Route::match(['get', 'post'], 'ledger/project-print', [LedgerController::class, 'projectLedgerPrint'])->name('ledgers.project_print');
+    Route::match(['get', 'post'], 'ledger/project-v2', [LedgerController::class, 'projectLedgerV2'])->name('ledgers.project_v2');
+    Route::match(['get', 'post'], 'ledger/project-v2-print', [LedgerController::class, 'projectLedgerV2Print'])->name('ledgers.project_v2_print');
     Route::match(['get', 'post'], 'ledger/loan', [LedgerController::class, 'loanLedger'])->name('ledgers.loan');
     Route::match(['get', 'post'], 'ledger/office-expense', [LedgerController::class, 'officeExpenseLedger'])->name('ledgers.office_expense');
     Route::match(['get', 'post'], 'ledger/office-expense-alias', [LedgerController::class, 'officeExpenseLedger'])->name('ledgers.office-expense');

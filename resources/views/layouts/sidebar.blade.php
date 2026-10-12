@@ -121,7 +121,8 @@
           <ul class="treeview-menu" {!! $isLedgersActive ? 'style="display: block;"' : '' !!}>
             <li class="{{ request()->routeIs('ledgers.client*') || request()->is('ledger/client*') ? 'active' : '' }}"><a href="{{ route('ledgers.client') }}"><i class="fa fa-star-o"></i>Client Ledger</a></li>
             <li class="{{ request()->routeIs('ledgers.supplier*') || request()->is('ledger/supplier*') ? 'active' : '' }}"><a href="{{ route('ledgers.supplier') }}"><i class="fa fa-star-o"></i>Supplier Ledger</a></li>
-            <li class="{{ request()->routeIs('ledgers.project*') || request()->is('ledger/project*') ? 'active' : '' }}"><a href="{{ route('ledgers.project') }}"><i class="fa fa-star-o"></i>Project Ledger</a></li>
+            <li class="{{ request()->routeIs('ledgers.project') || request()->is('ledger/project') ? 'active' : '' }}"><a href="{{ route('ledgers.project') }}"><i class="fa fa-star-o"></i>Project Ledger</a></li>
+            <li class="{{ request()->routeIs('ledgers.project_v2*') || request()->is('ledger/project-v2*') ? 'active' : '' }}"><a href="{{ route('ledgers.project_v2') }}"><i class="fa fa-star-o"></i>Project Ledger V2</a></li>
             <li class="{{ request()->routeIs('ledgers.loan*') || request()->is('ledger/loan*') ? 'active' : '' }}"><a href="{{ route('ledgers.loan') }}"><i class="fa fa-star-o"></i>Loan Ledger</a></li>
             <li class="{{ request()->routeIs('ledgers.office_expense*') || request()->routeIs('ledgers.office-expense*') || request()->is('ledger/office-expense*') ? 'active' : '' }}"><a href="{{ route('ledgers.office_expense') }}"><i class="fa fa-star-o"></i>Office Expense Ledger</a></li>
             <li class="{{ request()->routeIs('ledgers.account_statement*') || request()->routeIs('ledgers.account-statement*') || request()->is('ledger/account-statement*') ? 'active' : '' }}"><a href="{{ route('ledgers.account_statement') }}"><i class="fa fa-star-o"></i>Account Statement</a></li>

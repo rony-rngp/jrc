@@ -206,6 +206,10 @@ class BalanceTransferController extends Controller
             }
         }
 
+        if (request()->has('print') || request()->get('view') == 'print') {
+            return view('balance_transfers.print', compact('voucher', 'date', 'amount', 'from_account', 'to_account', 'trx_info', 'remarks_info'));
+        }
+
         return view('balance_transfers.show', compact('voucher', 'date', 'amount', 'from_account', 'to_account', 'trx_info', 'remarks_info'));
     }
 

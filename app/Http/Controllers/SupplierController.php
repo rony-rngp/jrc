@@ -51,7 +51,24 @@ class SupplierController extends Controller
 
     public function show($id)
     {
-        return $this->edit($id);
+        $supplier = Party::findOrFail($id);
+        
+        $bills = \App\Models\SupplierBill::where('supplier_id', $supplier->id)
+            ->orWhere('supplier_id', $supplier->party_name)
+            ->orderBy('bill_date', 'desc')
+            ->get();
+
+        $payments = \App\Models\SupplierPayment::where('supplier_id', $supplier->id)
+            ->orWhere('supplier_id', $supplier->party_name)
+            ->orderBy('t_date', 'desc')
+            ->get();
+
+        $opening = (float)$supplier->amount;
+        $totalBilled = (float)$bills->sum('grand_total');
+        $totalPaid = (float)$payments->sum('amount');
+        $netDue = ($opening + $totalBilled) - $totalPaid;
+
+        return view('suppliers.show', compact('supplier', 'bills', 'payments', 'opening', 'totalBilled', 'totalPaid', 'netDue'));
     }
 
     public function edit($id)

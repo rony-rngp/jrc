@@ -59,7 +59,21 @@ class AccountHeadController extends Controller
 
     public function show($id)
     {
-        return redirect()->route('account-heads.index');
+        $head = AccountHead::findOrFail($id);
+        $parent = $head->parent_id ? AccountHead::find($head->parent_id) : null;
+        $subHeads = AccountHead::where('parent_id', $head->id)->get();
+
+        $subHeadIds = $subHeads->pluck('id')->push($head->id)->toArray();
+
+        $transactions = \App\Models\GeneralTransaction::with('paymentMethod')
+            ->whereIn('head_id', $subHeadIds)
+            ->orderBy('t_date', 'desc')
+            ->get();
+
+        $totalReceive = (float)$transactions->where('t_type', 'Receive')->sum('amount');
+        $totalPayment = (float)$transactions->where('t_type', 'Payment')->sum('amount');
+
+        return view('account_heads.show', compact('head', 'parent', 'subHeads', 'transactions', 'totalReceive', 'totalPayment'));
     }
 
     public function edit($id)

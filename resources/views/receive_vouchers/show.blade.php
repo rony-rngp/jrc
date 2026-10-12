@@ -1,121 +1,160 @@
-@php
-if (!function_exists('getBdAmountInWords')) {
-    function getBdAmountInWords($number) {
-        $no = (int)floor($number);
-        $point = (int)round(($number - $no) * 100);
-        $words = array(0 => '', 1 => 'One', 2 => 'Two', 3 => 'Three', 4 => 'Four', 5 => 'Five', 6 => 'Six', 7 => 'Seven', 8 => 'Eight', 9 => 'Nine', 10 => 'Ten', 11 => 'Eleven', 12 => 'Twelve', 13 => 'Thirteen', 14 => 'Fourteen', 15 => 'Fifteen', 16 => 'Sixteen', 17 => 'Seventeen', 18 => 'Eighteen', 19 => 'Nineteen', 20 => 'Twenty', 30 => 'Thirty', 40 => 'Forty', 50 => 'Fifty', 60 => 'Sixty', 70 => 'Seventy', 80 => 'Eighty', 90 => 'Ninety');
-        $digits = array('', 'Hundred', 'Thousand', 'Lakh', 'Crore');
-        $i = 0; $str = array(); $digits_length = strlen($no);
-        while ($i < $digits_length) {
-            $divider = ($i == 2) ? 10 : 100; $value = floor($no % $divider); $no = floor($no / $divider); $i += ($divider == 10) ? 1 : 2;
-            if ($value) {
-                $counter = count($str); $plural = ($counter && $value > 9) ? '' : null; $hundred = ($counter == 1 && $str[0]) ? ' and ' : null;
-                if ($value < 21) $str[] = $words[$value] . ' ' . $digits[$counter] . $plural . $hundred;
-                else $str[] = $words[floor($value / 10) * 10] . ' ' . $words[$value % 10] . ' ' . $digits[$counter] . $plural . $hundred;
-            } else $str[] = null;
-        }
-        $result = implode('', array_reverse($str));
-        return ($result ? $result : "Zero") . " Taka Only.";
-    }
-}
-$amount_in_words = getBdAmountInWords((float)$amount);
-@endphp
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Money Receipt - {{ $voucher_no }}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <style>
-        body { font-family: 'Arial', sans-serif; background: #f0f0f0; margin: 0; padding: 20px; }
-        .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); background: #fff; position: relative; }
-        .invoice-box .logo-container { margin: -30px -30px 10px -30px !important; border-radius: 0 !important; }
-        .receipt-header { text-align: center; margin-bottom: 20px; }
-        .voucher-title { display: inline-block; background: #333; color: #fff; padding: 5px 20px; font-size: 18px; font-weight: bold; border-radius: 3px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px;}
-        .info-table { width: 100%; margin-bottom: 20px; font-size: 14px; border-top: 1px solid #eee; padding-top: 15px; }
-        .info-table td { padding: 5px; vertical-align: top; }
-        .info-table .right-align { text-align: right; }
-        .details-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .details-table th, .details-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        .details-table th { background: #f9f9f9; font-weight: bold; color: #333; }
-        .details-table .amount-col { text-align: right; width: 150px; font-weight: bold; }
-        .total-row td { font-weight: bold; font-size: 16px; background: #f1f1f1; }
-        .balance-row td { font-weight: bold; font-size: 14px; background: #e8f5e9; color: #2e7d32; }
-        .words-box { background: #fdfdfd; border: 1px dashed #ccc; padding: 10px; margin-bottom: 40px; font-style: italic; font-weight: bold; color: #444; }
-        .signatures { width: 100%; margin-top: 50px; display: table; }
-        .sig-box { display: table-cell; text-align: center; width: 33.33%; padding: 0 15px; }
-        .sig-line { border-top: 1px solid #333; margin-top: 40px; padding-top: 5px; font-weight: bold; font-size: 14px; }
-        .action-buttons { text-align: center; margin-bottom: 20px; }
-        .btn { background: #00a65a; color: white; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 4px; display: inline-block; text-decoration: none; }
+@extends('layouts.master')
 
-        /* প্রিন্টের জন্য হাফ পেজ সেটআপ */
-        @media print {
-            body { background: white; padding: 0; margin: 0; }
-            .action-buttons { display: none !important; }
-            @page { size: A4; margin: 0; }
-            .invoice-box { 
-                box-shadow: none; border: none; width: 100%; max-width: 100%; 
-                padding: 15mm; margin: 0;
-                height: 148.5mm; /* A4 এর অর্ধেক */
-                box-sizing: border-box;
-                border-bottom: 1px dashed #ccc; /* কাটার গাইড */
-            }
-        }
-    </style>
-</head>
-<body>
+@section('title', 'Receive Voucher Details - ' . $voucher_no)
 
-    <div class="action-buttons">
-        <a href="{{ route('receive-vouchers.index') }}" class="btn" style="background: #6c757d;">Go Back</a>
-        <button onclick="window.print();" class="btn">Print Receipt</button>
-    </div>
+@section('content')
+<section class="content-header">
+    <h1>
+        <i class="fa fa-arrow-circle-o-down text-green"></i> Receive Voucher Details
+        <small>{{ $voucher_no }}</small>
+    </h1>
+    <ol class="breadcrumb">
+        <li><a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
+        <li><a href="{{ route('receive-vouchers.index') }}">Receive Vouchers</a></li>
+        <li class="active">{{ $voucher_no }}</li>
+    </ol>
+</section>
 
-    <div class="invoice-box">
-        @include('layouts.voucher_logo')
-        <div class="receipt-header"><div class="voucher-title">Money Receipt</div></div>
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-success">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-info-circle"></i> Voucher Information & Actions</h3>
+                    <div class="box-tools pull-right">
+                        <a href="{{ route('receive-vouchers.show', $id) }}?type={{ $type }}&print=1" target="_blank" class="btn btn-primary btn-sm btn-flat">
+                            <i class="fa fa-print"></i> Print Money Receipt
+                        </a>
+                        <a href="{{ route('receive-vouchers.edit', $id) }}?type={{ $type }}" class="btn btn-success btn-sm btn-flat">
+                            <i class="fa fa-edit"></i> Edit Voucher
+                        </a>
+                        <a href="{{ route('receive-vouchers.index') }}" class="btn btn-default btn-sm btn-flat">
+                            <i class="fa fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <!-- Top Metric Cards -->
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="info-box bg-aqua">
+                                <span class="info-box-icon"><i class="fa fa-barcode"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Voucher No</span>
+                                    <span class="info-box-number">{{ $voucher_no }}</span>
+                                    <span class="progress-description">Date: {{ date('d M, Y', strtotime($t_date)) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="info-box bg-green">
+                                <span class="info-box-icon"><i class="fa fa-money"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Received Amount</span>
+                                    <span class="info-box-number">৳ {{ number_format((float)$amount, 2) }}</span>
+                                    <span class="progress-description">Type: {{ $receive_type_label }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="info-box bg-blue">
+                                <span class="info-box-icon"><i class="fa fa-credit-card"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Deposit Account</span>
+                                    <span class="info-box-number" style="font-size:16px;">{{ $method_name ?: 'Cash' }}</span>
+                                    <span class="progress-description">Ref: {{ $ref_info ?: 'Direct' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="info-box bg-yellow">
+                                <span class="info-box-icon"><i class="fa fa-balance-scale"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Balance Status</span>
+                                    <span class="info-box-number" style="font-size:14px;">{{ $current_balance_text ?: 'Updated' }}</span>
+                                    <span class="progress-description">Ledger Position</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-        <table class="info-table">
-            <tr>
-                <td><b>Receipt No:</b> {{ $voucher_no }}<br><b>Receive Type:</b> {{ $receive_type_label }}</td>
-                <td class="right-align"><b>Date:</b> {{ date('d M, Y', strtotime($t_date)) }}<br><b>Printed On:</b> {{ date('d M, Y h:i A') }}</td>
-            </tr>
-        </table>
+                    <!-- Details Box -->
+                    <div class="row" style="margin-top: 15px;">
+                        <div class="col-md-6">
+                            <div class="box box-solid box-default">
+                                <div class="box-header with-border bg-gray-light">
+                                    <h3 class="box-title"><i class="fa fa-user text-green"></i> Payer / Source Information</h3>
+                                </div>
+                                <div class="box-body no-padding">
+                                    <table class="table table-bordered table-striped">
+                                        <tr>
+                                            <th style="width: 35%;">Category / Type</th>
+                                            <td><span class="label label-success" style="font-size: 13px;">{{ $receive_type_label }}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Received From</th>
+                                            <td>{!! $received_from !!}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Voucher Date</th>
+                                            <td><b>{{ date('d F, Y', strtotime($t_date)) }}</b></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Voucher No</th>
+                                            <td><span class="label label-primary" style="font-size:13px;">{{ $voucher_no }}</span></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
 
-        <table class="details-table">
-            <thead>
-                <tr><th>Description / Particulars</th><th class="amount-col">Amount (Tk)</th></tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
-                        <div style="font-size: 16px; margin-bottom: 8px;">{!! $received_from !!}</div>
-                        <div style="margin-top: 15px;"><b>Received Via:</b> {{ $method_name }}</div>
-                        @if(!empty($ref_info))<div style="margin-top: 5px;"><b>Transaction Info:</b> {{ $ref_info }}</div>@endif
-                        @if(!empty($note))<div style="margin-top: 15px; color: #555;"><b>Note:</b> {!! nl2br(e($note)) !!}</div>@endif
-                    </td>
-                    <td class="amount-col" style="vertical-align: bottom; font-size: 18px;">{{ number_format((float)$amount, 2) }}</td>
-                </tr>
-                <tr class="total-row">
-                    <td style="text-align: right;">Total Amount Received:</td>
-                    <td class="amount-col"> {{ number_format((float)$amount, 2) }}</td>
-                </tr>
-                @if(!empty($current_balance_text))
-                <tr class="balance-row">
-                    <td style="text-align: right;">Status After This Receive:</td>
-                    <td class="amount-col">{{ $current_balance_text }}</td>
-                </tr>
-                @endif
-            </tbody>
-        </table>
+                        <div class="col-md-6">
+                            <div class="box box-solid box-default">
+                                <div class="box-header with-border bg-gray-light">
+                                    <h3 class="box-title"><i class="fa fa-bank text-primary"></i> Payment & Reference Info</h3>
+                                </div>
+                                <div class="box-body no-padding">
+                                    <table class="table table-bordered table-striped">
+                                        <tr>
+                                            <th style="width: 35%;">Deposit Method</th>
+                                            <td><b>{{ $method_name ?: 'Cash Account' }}</b></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Reference Details</th>
+                                            <td>{{ $ref_info ?: 'No external reference / Cash' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Amount Received</th>
+                                            <td class="text-green text-bold" style="font-size:16px;">৳ {{ number_format((float)$amount, 2) }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Remarks / Note</th>
+                                            <td>{{ $note ?: 'None' }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-        <div class="words-box"><b>In Words:</b> {{ $amount_in_words }}</div>
+                    <!-- Footer Actions -->
+                    <div class="row">
+                        <div class="col-md-12 text-right">
+                            <a href="{{ route('receive-vouchers.show', $id) }}?type={{ $type }}&print=1" target="_blank" class="btn btn-primary btn-flat">
+                                <i class="fa fa-print"></i> Print Money Receipt
+                            </a>
+                            <a href="{{ route('receive-vouchers.edit', $id) }}?type={{ $type }}" class="btn btn-success btn-flat">
+                                <i class="fa fa-edit"></i> Edit Voucher
+                            </a>
+                            <a href="{{ route('receive-vouchers.index') }}" class="btn btn-default btn-flat">
+                                <i class="fa fa-arrow-left"></i> Back to List
+                            </a>
+                        </div>
+                    </div>
 
-        <div class="signatures">
-            <div class="sig-box"><div class="sig-line">Payer / Depositor</div></div>
-            <div class="sig-box"><div class="sig-line">Prepared By</div></div>
-            <div class="sig-box"><div class="sig-line">Authorized Signature</div></div>
+                </div>
+            </div>
         </div>
     </div>
-</body>
-</html>
+</section>
+@endsection

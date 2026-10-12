@@ -303,7 +303,11 @@ class SupplierBillController extends Controller
         $real_due = max(0, (float)$bill->grand_total - $real_paid);
         $status = ($real_due <= 0) ? 'PAID' : 'DUE';
 
-        return view('supplier_bills.show', compact('bill', 'supplier', 'project', 'pay_method', 'trx_id', 'real_paid', 'real_due', 'status'));
+        if (request()->has('print') || request()->get('view') == 'print') {
+            return view('supplier_bills.print', compact('bill', 'supplier', 'project', 'pay_method', 'trx_id', 'real_paid', 'real_due', 'status'));
+        }
+
+        return view('supplier_bills.show', compact('bill', 'supplier', 'project', 'pay_method', 'trx_id', 'real_paid', 'real_due', 'status', 'payment'));
     }
 
     public function edit($id)

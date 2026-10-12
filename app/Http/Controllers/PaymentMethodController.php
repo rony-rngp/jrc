@@ -38,7 +38,17 @@ class PaymentMethodController extends Controller
 
     public function show($id)
     {
-        return redirect()->route('payment-methods.index');
+        $method = PaymentMethod::findOrFail($id);
+
+        $generalTx = \App\Models\GeneralTransaction::where('method_id', $method->id)->orderBy('t_date', 'desc')->get();
+        $clientPayments = \App\Models\PaymentReceivedProject::where('method_id', $method->id)->where('type', 'Receive')->orderBy('date', 'desc')->get();
+        $supplierPayments = \App\Models\SupplierPayment::where('method_id', $method->id)->orderBy('t_date', 'desc')->get();
+        $projectExpenses = \App\Models\ProjectExpense::where('method_id', $method->id)->orderBy('t_date', 'desc')->get();
+
+        $totalInflow = (float)$generalTx->where('t_type', 'Receive')->sum('amount') + (float)$clientPayments->sum('pay_amount');
+        $totalOutflow = (float)$generalTx->where('t_type', 'Payment')->sum('amount') + (float)$supplierPayments->sum('amount') + (float)$projectExpenses->sum('amount');
+
+        return view('payment_methods.show', compact('method', 'generalTx', 'clientPayments', 'supplierPayments', 'projectExpenses', 'totalInflow', 'totalOutflow'));
     }
 
     public function edit($id)

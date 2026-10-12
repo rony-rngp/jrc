@@ -53,7 +53,14 @@ class UserController extends Controller
 
     public function show($id)
     {
-        return redirect()->route('users.index');
+        $user = Admin::findOrFail($id);
+        $logs = \App\Models\ActivityLog::where('user_id', $user->id)
+            ->orWhere('description', 'like', "%{$user->username}%")
+            ->orderBy('id', 'desc')
+            ->limit(50)
+            ->get();
+
+        return view('users.show', compact('user', 'logs'));
     }
 
     public function edit($id)

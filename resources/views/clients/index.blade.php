@@ -41,6 +41,7 @@
                 <td>{{ $client->date }}</td>
                 <td>{{ $client->note }}</td>
                 <td>
+                  <a href="{{ route('clients.show', $client->id) }}" class="btn btn-info btn-sm btn-flat"><i class="fa fa-eye"></i> View</a>
                   <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-success btn-sm btn-flat"><i class="fa fa-edit"></i> Edit</a>
                   <form action="{{ route('clients.destroy', $client->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this client?');">
                     @csrf

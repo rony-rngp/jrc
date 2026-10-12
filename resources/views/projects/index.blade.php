@@ -45,6 +45,7 @@
                   </span>
                 </td>
                 <td>
+                  <a href="{{ route('projects.show', $project->id) }}" class="btn btn-info btn-sm btn-flat"><i class="fa fa-eye"></i> View</a>
                   <a href="{{ route('projects.edit', $project->id) }}" class="btn btn-success btn-sm btn-flat"><i class="fa fa-edit"></i> Edit</a>
                   <form action="{{ route('projects.destroy', $project->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this project?');">
                     @csrf

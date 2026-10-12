@@ -172,10 +172,11 @@
                                         <button class="btn btn-xs btn-default" style="margin-bottom:3px;" title="Locked. Final Bill already created." disabled>
                                             <i class="fa fa-lock"></i>
                                         </button>
-                                        <a href="{{ route('client-bills.show', $b->id) }}" target="_blank" class="btn btn-xs btn-success" style="margin-bottom:3px;" title="Print Bill"><i class="fa fa-print"></i></a>
+                                        <a href="{{ route('client-bills.show', $b->id) }}" class="btn btn-xs btn-info" style="margin-bottom:3px;" title="View Details"><i class="fa fa-eye"></i> View</a>
+                                        <a href="{{ route('client-bills.show', $b->id) }}?print=1" target="_blank" class="btn btn-xs btn-success" style="margin-bottom:3px;" title="Print Bill"><i class="fa fa-print"></i> Print</a>
                                         <button class="btn btn-xs btn-default" style="margin-bottom:3px;" disabled><i class="fa fa-trash"></i></button>
                                     @else
-                                        <button type="button" class="btn btn-xs btn-info edit-btn" style="margin-bottom:3px;"
+                                        <button type="button" class="btn btn-xs btn-warning edit-btn" style="margin-bottom:3px;"
                                             data-id="{{ $b->id }}" 
                                             data-proj="{{ $b->project_name }}"
                                             data-comp="{{ $b->company_name }}"
@@ -188,7 +189,8 @@
                                             title="Edit Bill">
                                             <i class="fa fa-edit"></i>
                                         </button>
-                                        <a href="{{ route('client-bills.show', $b->id) }}" target="_blank" class="btn btn-xs btn-success" style="margin-bottom:3px;" title="Print Bill"><i class="fa fa-print"></i></a>
+                                        <a href="{{ route('client-bills.show', $b->id) }}" class="btn btn-xs btn-info" style="margin-bottom:3px;" title="View Details"><i class="fa fa-eye"></i> View</a>
+                                        <a href="{{ route('client-bills.show', $b->id) }}?print=1" target="_blank" class="btn btn-xs btn-success" style="margin-bottom:3px;" title="Print Bill"><i class="fa fa-print"></i> Print</a>
                                         <form action="{{ route('client-bills.destroy', $b->id) }}" method="POST" style="display:inline-block; margin-bottom:3px;" onsubmit="return confirm('Are you sure you want to delete this bill?');">
                                             @csrf
                                             @method('DELETE')

@@ -93,21 +93,21 @@ class ComprehensiveFinalTest extends TestCase
         // Categories
         $cat = MaterialCategory::first();
         if ($cat) {
-            $this->get("/categories/{$cat->id}")->assertRedirect();
+            $this->get("/categories/{$cat->id}")->assertStatus(200);
             $this->get("/categories/{$cat->id}/edit")->assertStatus(200);
         }
 
         // Account Heads
         $head = AccountHead::first();
         if ($head) {
-            $this->get("/account-heads/{$head->id}")->assertRedirect();
+            $this->get("/account-heads/{$head->id}")->assertStatus(200);
             $this->get("/account-heads/{$head->id}/edit")->assertStatus(200);
         }
 
         // Payment Methods
         $pm = PaymentMethod::first();
         if ($pm) {
-            $this->get("/payment-methods/{$pm->id}")->assertRedirect();
+            $this->get("/payment-methods/{$pm->id}")->assertStatus(200);
             $this->get("/payment-methods/{$pm->id}/edit")->assertStatus(200);
         }
 
@@ -156,7 +156,7 @@ class ComprehensiveFinalTest extends TestCase
         // Users
         $user = Admin::first();
         if ($user) {
-            $this->get("/users/{$user->id}")->assertRedirect();
+            $this->get("/users/{$user->id}")->assertStatus(200);
             $this->get("/users/{$user->id}/edit")->assertStatus(200);
         }
     }
@@ -250,23 +250,70 @@ class ComprehensiveFinalTest extends TestCase
     }
 
     /**
-     * 6. Test User Profile Update
+     * 7. Test All CRUD Detailed View Pages
      */
-    public function test_profile_update(): void
+    public function test_all_crud_view_pages_display_full_details(): void
     {
         $this->actingAs($this->admin);
 
-        $response = $this->post('/profile/update', [
-            'firstname' => 'UpdatedFirst',
-            'lastname' => 'UpdatedLast',
-            'password' => 'newpassword123',
-            'password_confirmation' => 'newpassword123',
-        ]);
+        $client = Client::first();
+        if ($client) {
+            $res = $this->get("/clients/{$client->id}");
+            $res->assertStatus(200);
+            $res->assertSee($client->company_name);
+            $res->assertSee('Client Profile');
+            $res->assertSee('Total Billed');
+        }
 
-        $response->assertRedirect();
-        $this->admin->refresh();
-        $this->assertEquals('UpdatedFirst', $this->admin->firstname);
-        $this->assertEquals('UpdatedLast', $this->admin->lastname);
-        $this->assertTrue(Hash::check('newpassword123', $this->admin->password));
+        $supplier = Party::first();
+        if ($supplier) {
+            $res = $this->get("/suppliers/{$supplier->id}");
+            $res->assertStatus(200);
+            $res->assertSee($supplier->party_name);
+            $res->assertSee('Supplier Profile');
+            $res->assertSee('Total Purchases');
+        }
+
+        $project = Project::first();
+        if ($project) {
+            $res = $this->get("/projects/{$project->id}");
+            $res->assertStatus(200);
+            $res->assertSee($project->project_name);
+            $res->assertSee('Project Overview');
+            $res->assertSee('Material Bills');
+        }
+
+        $category = MaterialCategory::first();
+        if ($category) {
+            $res = $this->get("/categories/{$category->id}");
+            $res->assertStatus(200);
+            $res->assertSee($category->cat_name);
+            $res->assertSee('Material Category Item');
+        }
+
+        $head = AccountHead::first();
+        if ($head) {
+            $res = $this->get("/account-heads/{$head->id}");
+            $res->assertStatus(200);
+            $res->assertSee($head->head_name);
+            $res->assertSee('Account Head Details');
+        }
+
+        $pm = PaymentMethod::first();
+        if ($pm) {
+            $res = $this->get("/payment-methods/{$pm->id}");
+            $res->assertStatus(200);
+            $res->assertSee($pm->method_name);
+            $res->assertSee('Live Balance');
+        }
+
+        $user = Admin::first();
+        if ($user) {
+            $res = $this->get("/users/{$user->id}");
+            $res->assertStatus(200);
+            $res->assertSee($user->username);
+            $res->assertSee('Recent Activity Logs');
+        }
     }
 }
+

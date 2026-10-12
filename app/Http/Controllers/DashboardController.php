@@ -55,14 +55,14 @@ class DashboardController extends Controller
             $lateCount = 0;
             if (\Illuminate\Support\Facades\Schema::hasTable('attendance')) {
                 $ontimeCount = DB::table('attendance')
-                    ->whereRaw('MONTH(date) = ?', [$m])
-                    ->whereRaw('YEAR(date) = ?', [$year])
+                    ->whereMonth('date', $m)
+                    ->whereYear('date', $year)
                     ->where('status', 1)
                     ->count();
 
                 $lateCount = DB::table('attendance')
-                    ->whereRaw('MONTH(date) = ?', [$m])
-                    ->whereRaw('YEAR(date) = ?', [$year])
+                    ->whereMonth('date', $m)
+                    ->whereYear('date', $year)
                     ->where('status', 0)
                     ->count();
             }

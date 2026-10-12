@@ -1,322 +1,252 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Purchase Bill - {{ $bill->voucher_no }}</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-        
-        body { 
-            font-family: 'Roboto', Arial, sans-serif; 
-            margin: 0; 
-            padding: 30px; 
-            background: #e9ecef; 
-            color: #333;
-        }
-        .invoice-container { 
-            max-width: 850px; 
-            margin: 0 auto; 
-            background: #fff; 
-            border-radius: 8px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1); 
-            overflow: hidden;
-            position: relative;
-        }
+@extends('layouts.master')
 
-        .invoice-container .logo-container {
-            margin: 0 !important;
-            border-radius: 0 !important;
-        }
-        
-        .main-title {
-            text-align: center;
-            color: #2c3e50;
-            text-transform: uppercase;
-            margin: 20px 0 10px 0;
-            font-size: 24px;
-            letter-spacing: 1px;
-            font-weight: 700;
-        }
-        
-        .invoice-meta {
-            display: flex;
-            justify-content: space-between;
-            padding: 20px 30px;
-            background: #f8f9fa;
-            border-bottom: 2px solid #ecf0f5;
-            border-top: 1px solid #eee;
-        }
-        .meta-box { width: 48%; }
-        .meta-box h4 {
-            margin: 0 0 10px 0;
-            color: #7f8c8d;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .meta-table { width: 100%; border-collapse: collapse; }
-        .meta-table td { padding: 4px 0; font-size: 15px; }
-        .meta-table td strong { color: #2c3e50; display: inline-block; width: 110px; }
+@section('title', 'Supplier Bill Details - ' . $bill->voucher_no)
 
-        .invoice-body { padding: 30px; }
-        .item-table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-bottom: 20px; 
-        }
-        .item-table th, .item-table td { 
-            padding: 12px 15px; 
-            border-bottom: 1px solid #eee; 
-            text-align: left; 
-        }
-        .item-table th { 
-            background: #34495e; 
-            color: #fff; 
-            font-weight: 500;
-            text-transform: uppercase;
-            font-size: 13px;
-        }
-        .item-table tbody tr:nth-child(even) { background-color: #fcfcfc; }
-        
-        .invoice-footer {
-            display: flex;
-            justify-content: space-between;
-            padding: 0 30px 30px 30px;
-        }
-        .notes-box {
-            width: 50%;
-            background: #fdfbf3;
-            border-left: 4px solid #f1c40f;
-            padding: 15px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .summary-box { 
-            width: 40%; 
-        }
-        .summary-table { width: 100%; border-collapse: collapse; }
-        .summary-table th, .summary-table td { 
-            padding: 10px; 
-            font-size: 16px; 
-            border-bottom: 1px solid #eee;
-        }
-        .summary-table th { text-align: left; color: #555; }
-        .summary-table td { text-align: right; font-weight: bold; }
-        
-        .row-total th, .row-total td { font-size: 18px; color: #2c3e50; border-top: 2px solid #2c3e50; }
-        .text-paid { color: #27ae60 !important; }
-        .text-due { color: #e74c3c !important; }
+@section('content')
+<section class="content-header">
+    <h1>
+        <i class="fa fa-file-text-o text-primary"></i> Supplier Purchase Bill
+        <small>Voucher #{{ $bill->voucher_no }}</small>
+    </h1>
+    <ol class="breadcrumb">
+        <li><a href="{{ route('dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
+        <li><a href="{{ route('supplier-bills.index') }}">Supplier Bills</a></li>
+        <li class="active">{{ $bill->voucher_no }}</li>
+    </ol>
+</section>
 
-        .stamp {
-            position: absolute;
-            top: 170px;
-            right: 50px;
-            font-size: 40px;
-            font-weight: bold;
-            text-transform: uppercase;
-            border: 4px solid;
-            padding: 5px 20px;
-            border-radius: 10px;
-            transform: rotate(-15deg);
-            opacity: 0.15;
-            z-index: 0;
-            pointer-events: none;
-        }
-        .stamp.paid { color: #27ae60; border-color: #27ae60; }
-        .stamp.due { color: #e74c3c; border-color: #e74c3c; }
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-info-circle"></i> Bill Summary & Actions</h3>
+                    <div class="box-tools pull-right">
+                        <a href="{{ route('supplier-bills.show', $bill->id) }}?print=1" target="_blank" class="btn btn-primary btn-sm btn-flat">
+                            <i class="fa fa-print"></i> Print Invoice
+                        </a>
+                        <a href="{{ route('supplier-bills.edit', $bill->id) }}" class="btn btn-success btn-sm btn-flat">
+                            <i class="fa fa-edit"></i> Edit Bill
+                        </a>
+                        <a href="{{ route('supplier-bills.index') }}" class="btn btn-default btn-sm btn-flat">
+                            <i class="fa fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <!-- Top Metric Cards -->
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="info-box bg-aqua">
+                                <span class="info-box-icon"><i class="fa fa-file-text-o"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Voucher No</span>
+                                    <span class="info-box-number">{{ $bill->voucher_no }}</span>
+                                    <span class="progress-description">Date: {{ date('d M, Y', strtotime($bill->bill_date)) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="info-box bg-blue">
+                                <span class="info-box-icon"><i class="fa fa-money"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Grand Total</span>
+                                    <span class="info-box-number">৳ {{ number_format((float)$bill->grand_total, 2) }}</span>
+                                    <span class="progress-description">Type: {{ $bill->bill_type }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="info-box bg-green">
+                                <span class="info-box-icon"><i class="fa fa-check-circle"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Paid Amount</span>
+                                    <span class="info-box-number">৳ {{ number_format((float)$real_paid, 2) }}</span>
+                                    <span class="progress-description">Status: {{ $status }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="info-box {{ $real_due > 0 ? 'bg-red' : 'bg-gray' }}">
+                                <span class="info-box-icon"><i class="fa fa-clock-o"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Due Amount</span>
+                                    <span class="info-box-number">৳ {{ number_format((float)$real_due, 2) }}</span>
+                                    <span class="progress-description">{{ $real_due > 0 ? 'Payment Pending' : 'Fully Settled' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-        .signatures { 
-            display: flex; 
-            justify-content: space-between; 
-            padding: 40px 30px;
-            margin-top: 20px;
-        }
-        .sign-line { 
-            border-top: 1px solid #7f8c8d; 
-            width: 220px; 
-            text-align: center; 
-            padding-top: 8px; 
-            font-size: 14px;
-            color: #2c3e50;
-            font-weight: 500;
-        }
+                    <!-- Meta Information -->
+                    <div class="row" style="margin-top: 15px;">
+                        <div class="col-md-6">
+                            <div class="box box-solid box-default">
+                                <div class="box-header with-border bg-gray-light">
+                                    <h3 class="box-title"><i class="fa fa-truck text-primary"></i> Supplier & Project Info</h3>
+                                </div>
+                                <div class="box-body no-padding">
+                                    <table class="table table-bordered table-striped">
+                                        <tr>
+                                            <th style="width: 35%;">Supplier Name</th>
+                                            <td>
+                                                @if($bill->supplier_id == 'Cash Purchase')
+                                                    <span class="label label-default" style="font-size:13px;">Cash Purchase</span>
+                                                @elseif($supplier)
+                                                    <a href="{{ route('suppliers.show', $supplier->id) }}"><b>{{ $supplier->party_name }}</b></a>
+                                                    @if($supplier->phone) <br><small class="text-muted"><i class="fa fa-phone"></i> {{ $supplier->phone }}</small> @endif
+                                                    @if($supplier->address) <br><small class="text-muted"><i class="fa fa-map-marker"></i> {{ $supplier->address }}</small> @endif
+                                                @else
+                                                    <b>{{ $bill->supplier_id }}</b>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Project</th>
+                                            <td>
+                                                @if($project)
+                                                    <a href="{{ route('projects.show', $project->id) }}"><b>{{ $project->project_name }}</b></a>
+                                                    @if($project->project_location) <br><small class="text-muted"><i class="fa fa-map-marker"></i> {{ $project->project_location }}</small> @endif
+                                                @else
+                                                    <span class="text-muted">N/A</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Approval Status</th>
+                                            <td>
+                                                @if($bill->approval_status == 'Pending')
+                                                    <span class="label label-warning"><i class="fa fa-clock-o"></i> Pending</span>
+                                                @elseif($bill->approval_status == 'Rejected')
+                                                    <span class="label label-danger"><i class="fa fa-times-circle"></i> Rejected</span>
+                                                @else
+                                                    <span class="label label-success"><i class="fa fa-check-circle"></i> Approved</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Bill Date</th>
+                                            <td><b>{{ date('d-m-Y', strtotime($bill->bill_date)) }}</b></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
 
-        .text-right { text-align: right !important; }
-        .text-center { text-align: center !important; }
-        
-        .action-buttons { text-align: center; margin-top: 30px; }
-        .btn-print {
-            padding: 12px 30px;
-            font-size: 16px;
-            cursor: pointer;
-            background: #27ae60;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: 0.3s;
-            font-weight: 500;
-        }
-        .btn-print:hover { background: #219150; }
+                        <div class="col-md-6">
+                            <div class="box box-solid box-default">
+                                <div class="box-header with-border bg-gray-light">
+                                    <h3 class="box-title"><i class="fa fa-credit-card text-success"></i> Payment & Note Details</h3>
+                                </div>
+                                <div class="box-body no-padding">
+                                    <table class="table table-bordered table-striped">
+                                        <tr>
+                                            <th style="width: 35%;">Bill Entry Type</th>
+                                            <td><span class="label label-info">{{ $bill->bill_type }}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Payment Method</th>
+                                            <td>
+                                                @if($pay_method)
+                                                    <b>{{ $pay_method }}</b>
+                                                @else
+                                                    <span class="text-muted">None / Direct Credit</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Trx / Ref No</th>
+                                            <td>{{ $trx_id ?: 'N/A' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>General Note</th>
+                                            <td>{{ $bill->note ?: 'No specific note recorded.' }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-        @media print {
-            body { background: #fff; padding: 0; -webkit-print-color-adjust: exact; }
-            .invoice-container { box-shadow: none; border: none; max-width: 100%; border-radius: 0; }
-            .action-buttons { display: none; }
-            .item-table th { background: #34495e !important; color: #fff !important; }
-            .notes-box { background: #fdfbf3 !important; border-left: 4px solid #f1c40f !important; }
-            .stamp { top: 170px; }
-        }
-    </style>
-</head>
-<body>
+                    <!-- Items Table -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="box box-solid box-primary">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title"><i class="fa fa-cubes"></i> Purchased Items & Materials</h3>
+                                </div>
+                                <div class="box-body table-responsive no-padding">
+                                    <table class="table table-bordered table-hover">
+                                        <thead class="bg-gray">
+                                            <tr>
+                                                <th style="width: 50px;" class="text-center">#</th>
+                                                <th>Material Category</th>
+                                                <th>Particulars / Item Description</th>
+                                                <th class="text-center" style="width: 100px;">Unit</th>
+                                                <th class="text-right" style="width: 120px;">Quantity</th>
+                                                <th class="text-right" style="width: 140px;">Unit Rate (৳)</th>
+                                                <th class="text-right" style="width: 160px;">Total (৳)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @php $calcTotal = 0; @endphp
+                                            @forelse($bill->items as $idx => $item)
+                                                @php $calcTotal += (float)$item->amount; @endphp
+                                                <tr>
+                                                    <td class="text-center">{{ $idx + 1 }}</td>
+                                                    <td>
+                                                        <span class="label label-default">{{ $item->category->cat_name ?? $item->category_id ?? 'General' }}</span>
+                                                    </td>
+                                                    <td><b>{{ $item->item_name ?: 'N/A' }}</b></td>
+                                                    <td class="text-center">{{ $item->unit ?: '-' }}</td>
+                                                    <td class="text-right">{{ number_format((float)$item->qty, 2) }}</td>
+                                                    <td class="text-right">{{ number_format((float)$item->rate, 2) }}</td>
+                                                    <td class="text-right text-bold">৳ {{ number_format((float)$item->amount, 2) }}</td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="7" class="text-center text-muted">No item details recorded for this bill.</td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                        <tfoot class="bg-gray-light">
+                                            <tr>
+                                                <th colspan="6" class="text-right">Grand Total:</th>
+                                                <th class="text-right text-bold" style="font-size: 15px;">৳ {{ number_format((float)$bill->grand_total, 2) }}</th>
+                                            </tr>
+                                            <tr>
+                                                <th colspan="6" class="text-right text-green">Total Paid:</th>
+                                                <th class="text-right text-bold text-green" style="font-size: 15px;">৳ {{ number_format((float)$real_paid, 2) }}</th>
+                                            </tr>
+                                            <tr>
+                                                <th colspan="6" class="text-right {{ $real_due > 0 ? 'text-red' : 'text-green' }}">Net Due:</th>
+                                                <th class="text-right text-bold {{ $real_due > 0 ? 'text-red' : 'text-green' }}" style="font-size: 15px;">৳ {{ number_format((float)$real_due, 2) }}</th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-<div class="invoice-container">
-    
-    <div class="stamp {{ strtolower($status) }}">{{ $status }}</div>
+                    <!-- Footer Actions -->
+                    <div class="row">
+                        <div class="col-md-12 text-right">
+                            <a href="{{ route('supplier-bills.show', $bill->id) }}?print=1" target="_blank" class="btn btn-primary btn-flat">
+                                <i class="fa fa-print"></i> Print Invoice
+                            </a>
+                            <a href="{{ route('supplier-bills.edit', $bill->id) }}" class="btn btn-success btn-flat">
+                                <i class="fa fa-edit"></i> Edit Bill
+                            </a>
+                            <a href="{{ route('supplier-bills.index') }}" class="btn btn-default btn-flat">
+                                <i class="fa fa-arrow-left"></i> Back to Bills List
+                            </a>
+                        </div>
+                    </div>
 
-    @include('layouts.voucher_logo')
-
-    <h2 class="main-title">Purchase Bill</h2>
-
-    <div class="invoice-meta">
-        <div class="meta-box">
-            <h4>Billed To (Project Info)</h4>
-            <table class="meta-table">
-                <tr>
-                    <td><strong>Bill No:</strong></td>
-                    <td>{{ str_pad($bill->id, 5, '0', STR_PAD_LEFT) }}</td>
-                </tr>
-                <tr>
-                    <td><strong>Voucher:</strong></td>
-                    <td>{{ $bill->voucher_no }}</td>
-                </tr>
-                
-                <tr>
-                    <td><strong>Bill Type:</strong></td>
-                    <td>{{ $bill->bill_type }}</td>
-                </tr>
-                <tr>
-                    <td><strong>Date:</strong></td>
-                    <td>{{ date('d F, Y', strtotime($bill->bill_date)) }}</td>
-                </tr>
-            </table>
-        </div>
-        <div class="meta-box">
-            <h4>Supplier / Party Info</h4>
-            <table class="meta-table">
-
-                <tr>
-                    <td><strong>Project Name:</strong></td>
-                    <td>{{ $project->project_name ?? 'N/A' }}</td>
-                </tr>
-                
-                <tr>
-                    <td><strong>Supplier Name:</strong></td>
-                    <td style="font-size: 16px; font-weight: bold; color: #2c3e50;">
-                        {{ $bill->supplier_id == 'Cash Purchase' ? 'Cash Purchase (নগদ ক্রয়)' : ($supplier->party_name ?? $bill->supplier_id) }}
-                    </td>
-                </tr>
-
-                @if(!empty($supplier->party_phone))
-                <tr>
-                    <td><strong>Mobile No:</strong></td>
-                    <td>{{ $supplier->party_phone }}</td>
-                </tr>
-                @endif
-
-                <tr>
-                    <td><strong>Status:</strong></td>
-                    <td style="font-weight:bold; font-size:16px;" class="{{ $status == 'PAID' ? 'text-paid' : 'text-due' }}">
-                        {{ $status }}
-                    </td>
-                </tr>
-                
-                @if(!empty($pay_method))
-                <tr>
-                    <td><strong>Method:</strong></td>
-                    <td>{{ $pay_method }}</td>
-                </tr>
-                @endif
-
-                @if(!empty($trx_id))
-                <tr>
-                    <td><strong>Trx/Check No:</strong></td>
-                    <td>{{ $trx_id }}</td>
-                </tr>
-                @endif
-            </table>
-        </div>
-    </div>
-
-    <div class="invoice-body">
-        <table class="item-table">
-            <thead>
-                <tr>
-                    <th width="8%" class="text-center">SL</th>
-                    <th width="47%">Material / Product Details</th>
-                    <th width="15%" class="text-center">Qty</th>
-                    <th width="15%" class="text-right">Unit Price</th>
-                    <th width="15%" class="text-right">Total (৳)</th>
-                </tr>
-            </thead>
-            <tbody>
-                @php $sl = 1; @endphp
-                @forelse($bill->items as $item)
-                    <tr>
-                        <td class="text-center">{{ $sl++ }}</td>
-                        <td><strong>{{ $item->category->cat_name ?? 'Item' }}</strong></td>
-                        <td class="text-center">{{ $item->qty }}</td>
-                        <td class="text-right">{{ number_format((float)$item->unit_price, 2) }}</td>
-                        <td class="text-right">{{ number_format((float)$item->total_price, 2) }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="5" class="text-center">No items found in this bill.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    <div class="invoice-footer">
-        <div class="notes-box">
-            <strong style="color: #d35400;">Remarks / Note:</strong><br>
-            <span style="color: #555; line-height: 1.5;">
-                {!! !empty($bill->note) ? nl2br(e($bill->note)) : 'No remarks available for this bill.' !!}
-            </span>
-        </div>
-        
-        <div class="summary-box">
-            <table class="summary-table">
-                <tr class="row-total">
-                    <th>Grand Total:</th>
-                    <td>৳ {{ number_format((float)$bill->grand_total, 2) }}</td>
-                </tr>
-                <tr>
-                    <th>Paid Amount:</th>
-                    <td class="text-paid">৳ {{ number_format((float)$real_paid, 2) }}</td>
-                </tr>
-                <tr>
-                    <th>Total Due:</th>
-                    <td class="text-due">৳ {{ number_format((float)$real_due, 2) }}</td>
-                </tr>
-            </table>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div class="signatures">
-        <div class="sign-line">Prepared By</div>
-        <div class="sign-line">Checked By</div>
-        <div class="sign-line">Authorized Signature</div>
-    </div>
-
-</div>
-
-<div class="action-buttons">
-    <button class="btn-print" onclick="window.print()">
-        <svg style="width:20px; height:20px; vertical-align:middle; margin-right:5px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-        Print Invoice
-    </button>
-</div>
-
-</body>
-</html>
+</section>
+@endsection
