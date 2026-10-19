@@ -93,7 +93,7 @@ class SupplierBillController extends Controller
             }
         }
 
-        $bills = SupplierBill::with(['supplier', 'project', 'items.category'])
+        $bills = SupplierBill::with(['supplier', 'project'])
             ->orderBy('id', 'desc')
             ->get();
 
