@@ -63,6 +63,12 @@
         .print-footer {
             display: block !important;
         }
+        a[href]:after {
+            content: "" !important;
+        }
+        abbr[title]:after {
+            content: "" !important;
+        }
     }
 </style>
 @endpush

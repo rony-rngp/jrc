@@ -1268,6 +1268,22 @@ label {
     overflow: visible !important;
   }
 
+  /* Suppress Bootstrap 3 auto-printing URLs after links */
+  a[href]:after {
+    content: "" !important;
+  }
+
+  abbr[title]:after {
+    content: "" !important;
+  }
+
+  .dataTables_length,
+  .dataTables_filter,
+  .dataTables_info,
+  .dataTables_paginate {
+    display: none !important;
+  }
+
   @page {
     size: auto;
     margin: 10mm 15mm;

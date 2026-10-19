@@ -25,11 +25,15 @@
     .grand-total { background-color: #f8f9fa !important; font-weight: bold; font-size: 15px; }
     
     @media print {
-        .NoPrint { display: none !important; }
+        .NoPrint, .no-print { display: none !important; }
         .content-wrapper { margin-left: 0 !important; }
         .main-footer { display: none !important; }
         .table-custom th { background-color: #f2f2f2 !important; color: #000 !important; border: 1px solid #000 !important; }
         .table-custom td { border: 1px solid #000 !important; }
+        a[href]:after { content: "" !important; }
+        abbr[title]:after { content: "" !important; }
+        .emp-link { color: #000 !important; text-decoration: none !important; }
+        .dataTables_length, .dataTables_filter, .dataTables_info, .dataTables_paginate { display: none !important; }
     }
 </style>
 @endpush
@@ -151,6 +155,20 @@ $(document).ready(function(){
         "autoWidth": false,
         "pageLength": 50,
         "order": [[ 1, "asc" ]]
+    });
+
+    window.addEventListener('beforeprint', function() {
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#example1')) {
+            var dt = $('#example1').DataTable();
+            window._dt_orig_len_emp = dt.page.len();
+            dt.page.len(-1).draw();
+        }
+    });
+    window.addEventListener('afterprint', function() {
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#example1') && window._dt_orig_len_emp !== undefined) {
+            var dt = $('#example1').DataTable();
+            dt.page.len(window._dt_orig_len_emp).draw();
+        }
     });
 });
 </script>

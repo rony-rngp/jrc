@@ -58,6 +58,14 @@
             height: 14px;
             border-radius: 4px;
         }
+        @media print {
+            a[href]:after {
+                content: "" !important;
+            }
+            abbr[title]:after {
+                content: "" !important;
+            }
+        }
     </style>
     @stack('styles')
 </head>
