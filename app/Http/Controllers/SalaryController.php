@@ -395,9 +395,68 @@ class SalaryController extends Controller
         }
     }
 
-    public function history()
+    public function history(Request $request)
     {
-        $salaries = TblEmployeeSalary::with(['employee'])->orderBy('id', 'desc')->get();
-        return view('salary.history', compact('salaries'));
+        $employee_id = $request->input('employee_id', '');
+        $from_date = $request->input('from_date', '');
+        $to_date = $request->input('to_date', '');
+        $pay_month = $request->input('pay_month', '');
+
+        $query = TblEmployeeSalary::with(['employee']);
+
+        if (!empty($employee_id)) {
+            $query->where('employee_id', $employee_id);
+        }
+        if (!empty($from_date) && !empty($to_date)) {
+            $query->whereBetween('date', [$from_date, $to_date]);
+        } elseif (!empty($from_date)) {
+            $query->where('date', '>=', $from_date);
+        } elseif (!empty($to_date)) {
+            $query->where('date', '<=', $to_date);
+        }
+        if (!empty($pay_month)) {
+            $query->where('pay_month', $pay_month);
+        }
+
+        $salaries = $query->orderBy('id', 'desc')->get();
+        $employees = Employee::orderBy('firstname', 'asc')->get();
+
+        return view('salary.history', compact('salaries', 'employees', 'employee_id', 'from_date', 'to_date', 'pay_month'));
+    }
+
+    public function printSheet(Request $request)
+    {
+        $employee_id = $request->input('employee_id', '');
+        $from_date = $request->input('from_date', '');
+        $to_date = $request->input('to_date', '');
+        $pay_month = $request->input('pay_month', '');
+
+        $query = TblEmployeeSalary::with(['employee']);
+
+        $employee = null;
+        if (!empty($employee_id)) {
+            $query->where('employee_id', $employee_id);
+            $employee = Employee::find($employee_id);
+        }
+        if (!empty($from_date) && !empty($to_date)) {
+            $query->whereBetween('date', [$from_date, $to_date]);
+        } elseif (!empty($from_date)) {
+            $query->where('date', '>=', $from_date);
+        } elseif (!empty($to_date)) {
+            $query->where('date', '<=', $to_date);
+        }
+        if (!empty($pay_month)) {
+            $query->where('pay_month', $pay_month);
+        }
+
+        $salaries = $query->orderBy('date', 'asc')->orderBy('id', 'asc')->get();
+
+        return view('salary.sheet_print', compact('salaries', 'employee', 'employee_id', 'from_date', 'to_date', 'pay_month'));
+    }
+
+    public function printSlip($id)
+    {
+        $salary = TblEmployeeSalary::with(['employee'])->findOrFail($id);
+        return view('salary.payslip', compact('salary'));
     }
 }
