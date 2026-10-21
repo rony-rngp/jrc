@@ -102,9 +102,11 @@
                             <td><span class="label label-info">{{ $s->pay_month }}</span></td>
                             <td class="text-right font-mono">৳ {{ number_format((float)$s->main_salary, 2) }}</td>
                             <td class="text-right font-mono">৳ {{ number_format((float)$s->gross_salary, 2) }}</td>
-                            <td class="text-right font-mono text-danger">
+                            <td class="text-right font-mono {{ (float)$s->adv_deduct > 0 ? 'text-danger' : ((float)$s->adv_deduct < 0 ? 'text-green font-weight-bold' : '') }}">
                                 @if((float)$s->adv_deduct > 0)
                                     -৳ {{ number_format((float)$s->adv_deduct, 2) }}
+                                @elseif((float)$s->adv_deduct < 0)
+                                    +৳ {{ number_format(abs((float)$s->adv_deduct), 2) }}
                                 @else
                                     ৳ 0.00
                                 @endif
