@@ -295,8 +295,16 @@ $(document).ready(function(){
                 else { $('#due_notice').hide(); }
                 
                 $('#adv_deduct').val(res.advance_deduct);
-                if(res.advance_deduct > 0){ $('#adv_notice').show(); } 
-                else { $('#adv_notice').hide(); }
+                if(res.advance_deduct != 0){ 
+                    $('#adv_notice').show(); 
+                    if(res.advance_deduct < 0) {
+                        $('#adv_notice').html('<i class="fa fa-info-circle"></i> Advance balance deducted / added to salary');
+                    } else {
+                        $('#adv_notice').html('<i class="fa fa-warning"></i> Auto-fetched advance');
+                    }
+                } else { 
+                    $('#adv_notice').hide(); 
+                }
 
                 $('#salary_calc_area').slideDown();
                 calculateSalary();

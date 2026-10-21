@@ -56,7 +56,6 @@ class SalaryController extends Controller
 
                 $aRes = DB::table('emp_salary_advance')
                     ->where('employee_id', $empId)
-                    ->whereRaw("CAST(amount AS DECIMAL(15,2)) > 0")
                     ->where(function($q){
                         $q->whereNull('note')->orWhere('note', 'not like', '%Auto-generated Advance%');
                     })
@@ -69,7 +68,20 @@ class SalaryController extends Controller
 
                 $current_balance = $tot_earned - $tot_paid;
 
-                if ($current_balance > 0) {
+                // Check if there is an active pending negative advance (balance deduction from salary advance)
+                $pending_neg_adv = (float)DB::table('emp_salary_advance')
+                    ->where('employee_id', $empId)
+                    ->where('status', 'Pending')
+                    ->where('amount', '<', 0)
+                    ->where(function($q) use ($month) {
+                        $q->where('adjust_month', '<=', $month)->orWhereNull('adjust_month');
+                    })
+                    ->sum('amount');
+
+                if ($pending_neg_adv < 0) {
+                    $response['advance_deduct'] = round($pending_neg_adv, 2);
+                    $response['previous_due'] = $current_balance > 0 ? round($current_balance, 2) : 0;
+                } elseif ($current_balance > 0) {
                     $response['previous_due'] = round($current_balance, 2);
                     $response['advance_deduct'] = 0;
                 } elseif ($current_balance < 0) {
@@ -220,7 +232,7 @@ class SalaryController extends Controller
                 'approval_status' => 'Approved',
             ]);
 
-            if ($adv_deduct > 0) {
+            if ($adv_deduct != 0) {
                 DB::table('emp_salary_advance')
                     ->where('employee_id', $employee_id)
                     ->where(function($q) use ($pay_month) {
