@@ -265,9 +265,6 @@
                         $allowances = (float)$s->mobile_bill + (float)$s->lunch_bill + (float)$s->other_allowances + (float)$s->bonus;
                         $deductions = (float)$s->adv_deduct + (float)$s->fine + (float)$s->other_deduction;
                         $net = (float)$s->net_payable;
-                        if ($net <= 0 && (float)$s->amount > 0) {
-                            $net = (float)$s->amount;
-                        }
                         
                         $t_basic += (float)$s->main_salary;
                         $t_allow += $allowances;

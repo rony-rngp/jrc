@@ -75,17 +75,18 @@
                 <table class="table table-bordered table-striped table-datatable" id="salaryHistoryTable">
                     <thead>
                         <tr>
-                            <th width="5%">ID</th>
+                            <th width="4%">ID</th>
                             <th>Employee</th>
                             <th>Month</th>
                             <th class="text-right">Basic</th>
                             <th class="text-right">Gross</th>
+                            <th class="text-right">Adv Deduct</th>
                             <th class="text-right">Net Payable</th>
                             <th class="text-right">Paid Amount</th>
                             <th class="text-right">Due / Adv</th>
                             <th>Payment Method & Vch</th>
                             <th>Date</th>
-                            <th width="10%" class="text-center">Action</th>
+                            <th width="8%" class="text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -101,8 +102,15 @@
                             <td><span class="label label-info">{{ $s->pay_month }}</span></td>
                             <td class="text-right font-mono">৳ {{ number_format((float)$s->main_salary, 2) }}</td>
                             <td class="text-right font-mono">৳ {{ number_format((float)$s->gross_salary, 2) }}</td>
+                            <td class="text-right font-mono text-danger">
+                                @if((float)$s->adv_deduct > 0)
+                                    -৳ {{ number_format((float)$s->adv_deduct, 2) }}
+                                @else
+                                    ৳ 0.00
+                                @endif
+                            </td>
                             <td class="text-right font-mono font-weight-bold">
-                                ৳ {{ number_format((float)$s->net_payable > 0 ? (float)$s->net_payable : (float)$s->amount, 2) }}
+                                ৳ {{ number_format((float)$s->net_payable, 2) }}
                             </td>
                             <td class="text-right font-mono">
                                 <span class="text-green font-weight-bold">৳ {{ number_format((float)$s->amount, 2) }}</span>

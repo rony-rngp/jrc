@@ -143,9 +143,6 @@ class SalaryController extends Controller
 
         $paid_amount = (float)($request->input('paid_amount') ?? $request->input('amount') ?? 0);
         $net_payable = (float)$request->input('net_payable', $gross_salary - $adv_deduct - $fine - $other_deduction);
-        if ($net_payable <= 0 && $paid_amount > 0) {
-            $net_payable = $paid_amount;
-        }
         $due_amount = $net_payable - $paid_amount;
         $current_due_status = ($due_amount > 0) ? 'Pending' : 'Cleared';
 
@@ -226,7 +223,10 @@ class SalaryController extends Controller
             if ($adv_deduct > 0) {
                 DB::table('emp_salary_advance')
                     ->where('employee_id', $employee_id)
-                    ->where('adjust_month', $pay_month)
+                    ->where(function($q) use ($pay_month) {
+                        $q->where('adjust_month', '<=', $pay_month)
+                          ->orWhereNull('adjust_month');
+                    })
                     ->where('status', 'Pending')
                     ->update([
                         'status' => 'Adjusted',

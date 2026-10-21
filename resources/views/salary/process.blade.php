@@ -84,7 +84,7 @@
                                     <div class="form-group">
                                         <label class="col-sm-6 control-label" style="color: #0073b7;">Previous Due</label>
                                         <div class="col-sm-6">
-                                            <input type="number" step="0.01" class="form-control amount-text auto-calc" name="previous_due" id="previous_due" value="0" style="color: #0073b7; font-weight: bold;">
+                                            <input type="number" step="0.01" class="form-control amount-text auto-calc" name="previous_due" id="previous_due" value="0" readonly style="color: #0073b7; font-weight: bold;">
                                             <small id="due_notice" class="text-primary" style="display:none;"><i class="fa fa-info-circle"></i> Unpaid salary added</small>
                                         </div>
                                     </div>
@@ -107,8 +107,8 @@
                                     <div class="form-group">
                                         <label class="col-sm-6 control-label">Advance Deduction</label>
                                         <div class="col-sm-6">
-                                            <input type="number" step="0.01" class="form-control amount-text auto-calc" name="adv_deduct" id="adv_deduct" value="0" style="color:red;">
-                                            <small id="adv_notice" class="text-danger" style="display:none;"><i class="fa fa-warning"></i> Advance deducted</small>
+                                            <input type="number" step="0.01" class="form-control amount-text auto-calc" name="adv_deduct" id="adv_deduct" value="0" readonly style="color:red;">
+                                            <small id="adv_notice" class="text-danger" style="display:none;"><i class="fa fa-warning"></i> Auto-fetched advance</small>
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -325,9 +325,16 @@ $(document).ready(function(){
         var net = gross - total_deduct;
         $('#net_payable').val(net.toFixed(2));
         
-        $('#paid_amount').val(net.toFixed(2));
-        $('#due_label').text("Due / Advance");
-        $('#due_display').val("0.00").css({'color':'#999'});
+        // Auto Set Paid Amount
+        if(net < 0){
+            $('#paid_amount').val("0.00");
+            $('#due_label').text("Extra Advance (পরের মাসে কাটবে)");
+            $('#due_display').val(Math.abs(net).toFixed(2) + " ৳").css({'color':'#00a65a'});
+        } else {
+            $('#paid_amount').val(net.toFixed(2));
+            $('#due_label').text("Due / Advance");
+            $('#due_display').val("0.00").css({'color':'#999'});
+        }
     }
 
     $('.auto-calc').on('input', function(){ calculateSalary(); });

@@ -115,7 +115,7 @@
             <table>
                 <tr class="net-pay-text">
                     <td>Net Payable:</td>
-                    <td class="amount-col">৳ {{ number_format((float)$salary->net_payable > 0 ? (float)$salary->net_payable : (float)$salary->amount, 2) }}</td>
+                    <td class="amount-col">৳ {{ number_format((float)$salary->net_payable, 2) }}</td>
                 </tr>
                 <tr class="actual-paid">
                     <td>Actual Paid:</td>
