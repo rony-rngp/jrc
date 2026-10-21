@@ -94,16 +94,24 @@ class PaymentVoucherController extends Controller
             // 7. Get Supplier Overall Due / Advance
             if ($ajax_request == 'get_supplier_total_dues') {
                 $supplierId = $request->input('supplier_id');
-                $billed = (float)SupplierBill::where('supplier_id', $supplierId)->sum('grand_total');
-                $paid = (float)SupplierPayment::where('supplier_id', $supplierId)->sum('amount');
+                $party = Party::find($supplierId);
+                $opening = $party ? (float)$party->amount : 0;
 
-                $net = $billed - $paid;
+                $billed = (float)SupplierBill::where('supplier_id', $supplierId)
+                    ->whereIn('approval_status', ['Approved', 'Pending'])
+                    ->sum('grand_total');
+                $paid = (float)SupplierPayment::where('supplier_id', $supplierId)
+                    ->whereIn('approval_status', ['Approved', 'Pending'])
+                    ->sum('amount');
+
+                $net = $opening + $billed - $paid;
                 $status = ($net > 0) ? 'Total Due' : (($net < 0) ? 'Total Advance' : 'Settled');
+                $color = ($net > 0) ? 'danger' : (($net < 0) ? 'warning' : 'success');
 
                 return response()->json([
                     'amount' => number_format(abs($net), 2),
                     'status' => $status,
-                    'color' => ($net > 0) ? 'danger' : 'success'
+                    'color' => $color
                 ]);
             }
 
@@ -431,9 +439,11 @@ class PaymentVoucherController extends Controller
             $ref_date_val = $r->ref_date ?? '';
 
             $supplierId = $r->supplier_id;
-            $tot_bill = (float)SupplierBill::where('supplier_id', $supplierId)->sum('grand_total');
-            $tot_paid = (float)SupplierPayment::where('supplier_id', $supplierId)->sum('amount');
-            $net_bal = $tot_bill - $tot_paid;
+            $party = Party::find($supplierId);
+            $opening = $party ? (float)$party->amount : 0;
+            $tot_bill = (float)SupplierBill::where('supplier_id', $supplierId)->whereIn('approval_status', ['Approved', 'Pending'])->sum('grand_total');
+            $tot_paid = (float)SupplierPayment::where('supplier_id', $supplierId)->whereIn('approval_status', ['Approved', 'Pending'])->sum('amount');
+            $net_bal = $opening + $tot_bill - $tot_paid;
 
             if ($net_bal > 0) $current_balance_text = "Total Due: ৳ " . number_format($net_bal, 2);
             elseif ($net_bal < 0) $current_balance_text = "Total Advance: ৳ " . number_format(abs($net_bal), 2);

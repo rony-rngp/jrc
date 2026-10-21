@@ -106,8 +106,11 @@ Route::middleware(['auth'])->group(function () {
     // Approvals
     Route::get('approvals/pending', [ApprovalController::class, 'pending'])->name('approvals.pending');
     Route::get('approvals/rejected', [ApprovalController::class, 'rejected'])->name('approvals.rejected');
-    Route::post('approvals/{type}/{id}/approve', [ApprovalController::class, 'approve'])->name('approvals.approve');
-    Route::post('approvals/{type}/{id}/reject', [ApprovalController::class, 'reject'])->name('approvals.reject');
+    Route::match(['get', 'post'], 'approvals/action', [ApprovalController::class, 'handleAction'])->name('approvals.action');
+    Route::match(['get', 'post'], 'approvals/{type}/{id}/approve', [ApprovalController::class, 'approve'])->name('approvals.approve');
+    Route::match(['get', 'post'], 'approvals/{type}/{id}/reject', [ApprovalController::class, 'reject'])->name('approvals.reject');
+    Route::match(['get', 'post'], 'approvals/{type}/{id}/restore', [ApprovalController::class, 'restore'])->name('approvals.restore');
+    Route::match(['get', 'post'], 'approvals/{type}/{id}/delete', [ApprovalController::class, 'destroy'])->name('approvals.destroy');
 
     // Activity Log
     Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');

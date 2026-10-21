@@ -90,7 +90,11 @@
             <ul class="nav navbar-nav">
               
               @php
-                $notif_count = \App\Models\SupplierBill::where('approval_status', 'Pending')->count() + \App\Models\SupplierPayment::where('approval_status', 'Pending')->count();
+                $notif_count = \App\Models\SupplierBill::where('approval_status', 'Pending')->count()
+                    + \App\Models\SupplierPayment::where('approval_status', 'Pending')->count()
+                    + \App\Models\PaymentReceivedProject::where('approval_status', 'Pending')->where('val', 0)->count()
+                    + \App\Models\ProjectExpense::where('approval_status', 'Pending')->count()
+                    + \App\Models\GeneralTransaction::where('approval_status', 'Pending')->where('t_type', 'Payment')->count();
               @endphp
               <li class="dropdown messages-menu">
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Notifications">

@@ -10,6 +10,11 @@ class GeneralTransaction extends Model
     public $timestamps = false;
     protected $guarded = [];
 
+    public function head()
+    {
+        return $this->belongsTo(AccountHead::class, 'head_id', 'id');
+    }
+
     public function accountHead()
     {
         return $this->belongsTo(AccountHead::class, 'head_id', 'id');

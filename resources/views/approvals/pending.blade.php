@@ -1,77 +1,260 @@
 @extends('layouts.master')
 
-@section('title', 'JR || Corporation - Pending Approvals')
-@section('page_title', 'Pending Approvals')
+@section('title', 'Central Approval Queue - JRC ERP')
+@section('page_title', 'Central Approval Queue')
 
 @section('breadcrumb')
-<li class="active">Approvals</li>
+<li class="active">Central Approval Queue</li>
 @endsection
 
 @section('content')
 <div class="row">
     <div class="col-xs-12">
-        <div class="box">
-            <div class="box-header with-border">
-                <h3 class="box-title"><i class="fa fa-clock-o text-yellow"></i> Supplier Bills Pending Approval</h3>
-            </div>
-            <div class="box-body table-responsive">
-                <table id="example1" class="table table-bordered table-striped">
-                    <thead>
-                        <th>Bill Date</th>
-                        <th>Voucher No</th>
-                        <th>Supplier</th>
-                        <th>Total Amount</th>
-                        <th>Actions</th>
-                    </thead>
-                    <tbody>
-                        @forelse($supplierBills as $sb)
-                        <tr>
-                            <td>{{ $sb->bill_date }}</td>
-                            <td><span class="label label-warning">{{ $sb->voucher_no }}</span></td>
-                            <td><b>{{ $sb->supplier->supp_name ?? 'N/A' }}</b></td>
-                            <td>৳ {{ number_format($sb->grand_total, 2) }}</td>
-                            <td>
-                                <form action="{{ route('approvals.approve', ['type' => 'supplier', 'id' => $sb->id]) }}" method="POST" style="display:inline;">
-                                    @csrf
-                                    <button type="submit" class="btn btn-success btn-xs"><i class="fa fa-check"></i> Approve</button>
-                                </form>
-                                <button class="btn btn-danger btn-xs" data-toggle="modal" data-target="#reject_sb_{{ $sb->id }}"><i class="fa fa-times"></i> Reject</button>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr><td colspan="5" class="text-center">No pending supplier bills</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <h3 style="margin-top:0; margin-bottom: 20px; font-weight:700;">
+            <i class="fa fa-check-square-o text-green"></i> Central Approval Queue
+            <small style="font-size: 14px; color: #777;">Approve, Reject or Delete Pending Transactions</small>
+        </h3>
     </div>
 </div>
 
-<!-- Reject Modals (Outside table for valid markup) -->
-@foreach($supplierBills as $sb)
-<div class="modal fade" id="reject_sb_{{ $sb->id }}">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">Reject Voucher: <b>{{ $sb->voucher_no }}</b></h4>
-            </div>
-            <form method="POST" action="{{ route('approvals.reject', ['type' => 'supplier', 'id' => $sb->id]) }}">
-                @csrf
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Reason for rejection</label>
-                        <textarea class="form-control" name="reject_reason" rows="3" placeholder="State reason for rejecting this bill..." required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-danger">Confirm Reject</button>
-                </div>
-            </form>
-        </div>
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        {{ session('error') }}
+    </div>
+@endif
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        {{ session('success') }}
+    </div>
+@endif
+
+<!-- 1. Client Project Payments (Incomes) -->
+<div class="box box-success">
+    <div class="box-header with-border">
+        <h3 class="box-title"><i class="fa fa-arrow-circle-down text-green"></i> Client Project Payments (Incomes)</h3>
+    </div>
+    <div class="box-body table-responsive">
+        <table class="table table-bordered table-striped custom-datatable">
+            <thead class="bg-green">
+                <tr>
+                    <th>Date</th>
+                    <th>Voucher/Ref</th>
+                    <th>Client Name</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($clientPayments as $row)
+                @php
+                    $voucher = str_replace('Voucher: ', '', $row->name);
+                @endphp
+                <tr>
+                    <td>{{ date('d-M-Y', strtotime($row->date)) }}</td>
+                    <td><b>{{ $voucher }}</b></td>
+                    <td>{{ $row->company_name }}</td>
+                    <td class="text-bold text-green">৳ {{ number_format($row->pay_amount, 2) }}</td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ route('approvals.action', ['action' => 'approve', 'id' => $row->id, 'type' => 'Income']) }}" class="btn btn-success btn-sm" title="Approve" onclick="return confirm('Approve this transaction and update balance?')">
+                                <i class="fa fa-check"></i> Approve
+                            </a>
+                            <a href="{{ route('approvals.action', ['action' => 'reject', 'id' => $row->id, 'type' => 'Income']) }}" class="btn btn-warning btn-sm" title="Reject (Soft Delete)" onclick="return confirm('Reject this transaction? (It will be moved to Rejected List)')">
+                                <i class="fa fa-ban"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>
 </div>
-@endforeach
+
+<!-- 2. Supplier Bills (Only Bills & Dues) -->
+<div class="box box-purple" style="border-top-color: #605ca8;">
+    <div class="box-header with-border">
+        <h3 class="box-title" style="color: #605ca8;"><i class="fa fa-file-text-o"></i> Supplier Bills (Only Bills & Dues)</h3>
+    </div>
+    <div class="box-body table-responsive">
+        <table class="table table-bordered table-striped custom-datatable">
+            <thead style="background-color: #605ca8; color: white;">
+                <tr>
+                    <th>Bill Date</th>
+                    <th>Voucher No</th>
+                    <th>Supplier & Project</th>
+                    <th>Bill Amount</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($supplierBills as $row)
+                <tr>
+                    <td>{{ date('d-M-Y', strtotime($row->bill_date)) }}</td>
+                    <td><b>{{ $row->voucher_no }}</b></td>
+                    <td>
+                        <b>{{ $row->supplier->party_name ?? ($row->supplier_id == 'Cash Purchase' ? 'Cash Purchase' : $row->supplier_id) }}</b>
+                        <br><small>{{ $row->project->project_name ?? 'N/A' }}</small>
+                    </td>
+                    <td class="text-bold" style="color:#605ca8;">৳ {{ number_format($row->grand_total, 2) }}</td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ route('approvals.action', ['action' => 'approve', 'id' => $row->id, 'type' => 'SupplierBill']) }}" class="btn btn-success btn-sm" title="Approve" onclick="return confirm('Approve this transaction and update balance?')">
+                                <i class="fa fa-check"></i> Approve
+                            </a>
+                            <a href="{{ route('approvals.action', ['action' => 'reject', 'id' => $row->id, 'type' => 'SupplierBill']) }}" class="btn btn-warning btn-sm" title="Reject (Soft Delete)" onclick="return confirm('Reject this transaction? (It will be moved to Rejected List)')">
+                                <i class="fa fa-ban"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 3. Supplier Payments (Expenses) -->
+<div class="box box-danger">
+    <div class="box-header with-border">
+        <h3 class="box-title"><i class="fa fa-truck text-red"></i> Supplier Payments (Expenses)</h3>
+    </div>
+    <div class="box-body table-responsive">
+        <table class="table table-bordered table-striped custom-datatable">
+            <thead class="bg-red">
+                <tr>
+                    <th>Date</th>
+                    <th>Voucher No</th>
+                    <th>Supplier & Project</th>
+                    <th>Amount Paid</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($supplierPayments as $row)
+                <tr>
+                    <td>{{ date('d-M-Y', strtotime($row->t_date)) }}</td>
+                    <td><b>{{ $row->voucher_no }}</b></td>
+                    <td>
+                        <b>{{ $row->supplier->party_name ?? ($row->supplier_id == 'Cash Purchase' ? 'Cash Purchase' : $row->supplier_id) }}</b>
+                        <br><small>{{ $row->project->project_name ?? 'N/A' }}</small>
+                    </td>
+                    <td class="text-bold text-red">৳ {{ number_format($row->amount, 2) }}</td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ route('approvals.action', ['action' => 'approve', 'id' => $row->id, 'type' => 'Supplier']) }}" class="btn btn-success btn-sm" title="Approve" onclick="return confirm('Approve this transaction and update balance?')">
+                                <i class="fa fa-check"></i> Approve
+                            </a>
+                            <a href="{{ route('approvals.action', ['action' => 'reject', 'id' => $row->id, 'type' => 'Supplier']) }}" class="btn btn-warning btn-sm" title="Reject (Soft Delete)" onclick="return confirm('Reject this transaction? (It will be moved to Rejected List)')">
+                                <i class="fa fa-ban"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 4. Project Direct Expenses -->
+<div class="box box-warning">
+    <div class="box-header with-border">
+        <h3 class="box-title"><i class="fa fa-building text-orange"></i> Project Direct Expenses</h3>
+    </div>
+    <div class="box-body table-responsive">
+        <table class="table table-bordered table-striped custom-datatable">
+            <thead class="bg-orange">
+                <tr>
+                    <th>Date</th>
+                    <th>Voucher</th>
+                    <th>Project & Reason</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($projectExpenses as $row)
+                <tr>
+                    <td>{{ date('d-M-Y', strtotime($row->t_date)) }}</td>
+                    <td><b>{{ $row->voucher_no }}</b></td>
+                    <td>
+                        <b>{{ $row->project->project_name ?? 'N/A' }}</b>
+                        <br><small>{{ $row->expense_head }}</small>
+                    </td>
+                    <td class="text-bold text-orange">৳ {{ number_format($row->amount, 2) }}</td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ route('approvals.action', ['action' => 'approve', 'id' => $row->id, 'type' => 'Project']) }}" class="btn btn-success btn-sm" title="Approve" onclick="return confirm('Approve this transaction and update balance?')">
+                                <i class="fa fa-check"></i> Approve
+                            </a>
+                            <a href="{{ route('approvals.action', ['action' => 'reject', 'id' => $row->id, 'type' => 'Project']) }}" class="btn btn-warning btn-sm" title="Reject (Soft Delete)" onclick="return confirm('Reject this transaction? (It will be moved to Rejected List)')">
+                                <i class="fa fa-ban"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 5. General / Loan Payments -->
+<div class="box box-primary">
+    <div class="box-header with-border">
+        <h3 class="box-title"><i class="fa fa-list-alt text-blue"></i> General / Loan Payments</h3>
+    </div>
+    <div class="box-body table-responsive">
+        <table class="table table-bordered table-striped custom-datatable">
+            <thead class="bg-blue">
+                <tr>
+                    <th>Date</th>
+                    <th>Voucher</th>
+                    <th>Account Head / Note</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($generalPayments as $row)
+                <tr>
+                    <td>{{ date('d-M-Y', strtotime($row->t_date)) }}</td>
+                    <td><b>{{ $row->check_no }}</b></td>
+                    <td>
+                        <b>{{ $row->head->head_name ?? $row->accountHead->head_name ?? 'N/A' }}</b>
+                        <br><small>{{ $row->note }}</small>
+                    </td>
+                    <td class="text-bold text-blue">৳ {{ number_format($row->amount, 2) }}</td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ route('approvals.action', ['action' => 'approve', 'id' => $row->id, 'type' => 'General']) }}" class="btn btn-success btn-sm" title="Approve" onclick="return confirm('Approve this transaction and update balance?')">
+                                <i class="fa fa-check"></i> Approve
+                            </a>
+                            <a href="{{ route('approvals.action', ['action' => 'reject', 'id' => $row->id, 'type' => 'General']) }}" class="btn btn-warning btn-sm" title="Reject (Soft Delete)" onclick="return confirm('Reject this transaction? (It will be moved to Rejected List)')">
+                                <i class="fa fa-ban"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function(){
+    if($.fn.DataTable) {
+        $('.custom-datatable').DataTable({
+            "order": [],
+            "pageLength": 10
+        });
+    }
+});
+</script>
+@endpush

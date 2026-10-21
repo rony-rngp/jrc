@@ -566,7 +566,7 @@ $(document).ready(function(){
         if(!supplier_id) return;
         
         $.post(ajaxUrl, {ajax_request: 'get_supplier_total_dues', supplier_id: supplier_id}, function(res){
-            $('#sup_overall_badge').text(res.status).removeClass('label-danger label-success').addClass('label-' + res.color);
+            $('#sup_overall_badge').text(res.status).removeClass('label-danger label-success label-warning label-default').addClass('label-' + res.color);
             $('#sup_overall_amt').text(' ' + res.amount);
             $('#supplier_total_status').slideDown();
         }, 'json');
