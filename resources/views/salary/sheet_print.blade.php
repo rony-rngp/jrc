@@ -300,41 +300,27 @@
                     </tr>
                 @endforelse
             </tbody>
+            @if($employee)
             <tfoot>
                 <tr class="row-total">
-                    <td colspan="{{ $employee ? 3 : 4 }}" class="text-right">Total:</td>
+                    <td colspan="3" class="text-right">Total:</td>
                     <td class="amt">{{ number_format($t_basic, 2) }}</td>
                     <td class="amt">{{ number_format($t_allow, 2) }}</td>
-                    <td class="amt">
-                        @if($employee)
-                            {{ number_format($t_basic + $t_allow, 2) }}
-                        @else
-                            {{ number_format($t_gross, 2) }}
-                        @endif
-                    </td>
+                    <td class="amt">{{ number_format($t_basic + $t_allow, 2) }}</td>
                     <td class="amt">{{ number_format($t_deduct, 2) }}</td>
-                    <td class="amt">
-                        @if($employee)
-                            {{ number_format(($t_basic + $t_allow) - $t_deduct, 2) }}
-                        @else
-                            {{ number_format($t_net, 2) }}
-                        @endif
-                    </td>
+                    <td class="amt">{{ number_format(($t_basic + $t_allow) - $t_deduct, 2) }}</td>
                     <td class="amt text-paid">{{ number_format($t_paid, 2) }}</td>
-                    <td class="amt {{ ($employee ? (count($salaries) > 0 ? (float)$salaries->last()->due_amount : 0) : $t_due) > 0 ? 'text-due' : '' }}">
-                        @if($employee)
-                            {{ count($salaries) > 0 ? number_format((float)$salaries->last()->due_amount, 2) : '0.00' }}
-                        @else
-                            {{ number_format($t_due, 2) }}
-                        @endif
+                    <td class="amt {{ (count($salaries) > 0 ? (float)$salaries->last()->due_amount : 0) > 0 ? 'text-due' : '' }}">
+                        {{ count($salaries) > 0 ? number_format((float)$salaries->last()->due_amount, 2) : '0.00' }}
                     </td>
                     <td class="text-center">
-                        @if($employee && count($salaries) > 0)
+                        @if(count($salaries) > 0)
                             <small class="text-muted"><i class="fa fa-info-circle"></i> Closing Due</small>
                         @endif
                     </td>
                 </tr>
             </tfoot>
+            @endif
         </table>
 
         <table class="signatures">
