@@ -150,6 +150,38 @@
                     </div>
                 </div>
             </div>
+
+            <h4 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 30px; margin-bottom: 20px; color: #e08e0b;"><i class="fa fa-balance-scale"></i> 3. Opening Balance Setup (ঐচ্ছিক / পূর্বের বকেয়া বা অগ্রিম থাকলে)</h4>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">Opening Amount</label>
+                        <div class="col-sm-7">
+                            <input type="number" step="0.01" class="form-control" name="opening_balance" value="{{ $opening_balance ?? 0 }}" placeholder="0.00">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">Balance Type</label>
+                        <div class="col-sm-8">
+                            <select class="form-control" name="opening_type">
+                                <option value="due" {{ ($opening_type ?? 'due') == 'due' ? 'selected' : '' }}>Salary Due (বকেয়া - কর্মচারী পাবে)</option>
+                                <option value="advance" {{ ($opening_type ?? 'due') == 'advance' ? 'selected' : '' }}>Salary Advance (অগ্রিম - কোম্পানি পাবে)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">Opening Date</label>
+                        <div class="col-sm-8">
+                            <input type="date" class="form-control" name="opening_date" value="{{ $opening_date ?? date('Y-m-d') }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div class="box-footer text-right">

@@ -1711,93 +1711,93 @@ class LedgerController extends Controller
             $account_type = $method_info ? $method_info->account_type : '';
 
             $sql_union = "
-                SELECT gt.t_date as date, 
-                       IF(gt.trans_type = 'Transfer' OR gt.note LIKE '%Balance Transfer%', 'Transfer In', 'Loan Recv') as category, 
+                SELECT gt.t_date as date,
+                       IF(gt.trans_type = 'Transfer' OR gt.note LIKE '%Balance Transfer%', 'Transfer In', 'Loan Recv') as category,
                        CONCAT(
-                           '<b>', 
-                           IF(gt.trans_type = 'Transfer', 
-                              CONCAT('Fund Transfer <small class=\"text-success\">(From: ', IFNULL(pm2.method_name, 'Other Account'), ')</small>'), 
+                           '<b>',
+                           IF(gt.trans_type = 'Transfer',
+                              CONCAT('Fund Transfer <small class=\"text-success\">(From: ', IFNULL(pm2.method_name, 'Other Account'), ')</small>'),
                               IFNULL(h.head_name, IF(IFNULL(gt.main_head, '') != '', gt.main_head, 'General Receive'))
-                           ), 
+                           ),
                            '</b>',
                            IF(IFNULL(gt.check_no, '') != '', CONCAT('<br><small class=\"text-muted\">Voucher: <b>', gt.check_no, '</b></small>'), ''),
                            IF(IFNULL(gt.ref_no, '') != '', CONCAT('<small class=\"text-muted\"> | Ref: ', gt.ref_no, '</small>'), ''),
                            IF(IFNULL(gt.note, '') != '', CONCAT('<br><small class=\"text-muted\">Note: ', gt.note, '</small>'), '')
-                       ) as note, 
-                       gt.amount as amt_in, 0 as amt_out, gt.id 
-                FROM general_transactions gt 
-                LEFT JOIN account_heads h ON gt.head_id = h.id 
+                       ) as note,
+                       gt.amount as amt_in, 0 as amt_out, gt.id
+                FROM general_transactions gt
+                LEFT JOIN account_heads h ON gt.head_id = h.id
                 LEFT JOIN general_transactions gt2 ON gt.check_no = gt2.check_no AND gt.t_date = gt2.t_date AND gt.amount = gt2.amount AND gt.t_type != gt2.t_type AND gt.trans_type = 'Transfer'
                 LEFT JOIN payment_method pm2 ON gt2.method_id = pm2.id
                 WHERE gt.method_id = '$method_id' AND gt.t_type = 'Receive' AND (gt.approval_status = 'Approved' OR gt.approval_status IS NULL)
-                
+
                 UNION ALL
-                
-                SELECT gt.t_date as date, 
-                       IF(gt.trans_type = 'Transfer' OR gt.note LIKE '%Balance Transfer%', 'Transfer Out', 
+
+                SELECT gt.t_date as date,
+                       IF(gt.trans_type = 'Transfer' OR gt.note LIKE '%Balance Transfer%', 'Transfer Out',
                           IF(gt.note LIKE '%[Loan%' OR h.head_name LIKE '%Loan%', 'Loan Pay', 'Others Out')
-                       ) as category, 
+                       ) as category,
                        CONCAT(
-                           '<b>', 
-                           IF(gt.trans_type = 'Transfer', 
-                              CONCAT('Fund Transfer <small class=\"text-danger\">(To: ', IFNULL(pm2.method_name, 'Other Account'), ')</small>'), 
+                           '<b>',
+                           IF(gt.trans_type = 'Transfer',
+                              CONCAT('Fund Transfer <small class=\"text-danger\">(To: ', IFNULL(pm2.method_name, 'Other Account'), ')</small>'),
                               IFNULL(h.head_name, IF(IFNULL(gt.main_head, '') != '', gt.main_head, 'General Expense'))
-                           ), 
+                           ),
                            '</b>',
                            IF(IFNULL(gt.check_no, '') != '', CONCAT('<br><small class=\"text-muted\">Voucher: <b>', gt.check_no, '</b></small>'), ''),
                            IF(IFNULL(gt.ref_no, '') != '', CONCAT('<small class=\"text-muted\"> | Ref: ', gt.ref_no, '</small>'), ''),
                            IF(IFNULL(gt.note, '') != '', CONCAT('<br><small class=\"text-muted\">Note: ', gt.note, '</small>'), '')
-                       ) as note, 
-                       0 as amt_in, gt.amount as amt_out, gt.id 
-                FROM general_transactions gt 
-                LEFT JOIN account_heads h ON gt.head_id = h.id 
+                       ) as note,
+                       0 as amt_in, gt.amount as amt_out, gt.id
+                FROM general_transactions gt
+                LEFT JOIN account_heads h ON gt.head_id = h.id
                 LEFT JOIN general_transactions gt2 ON gt.check_no = gt2.check_no AND gt.t_date = gt2.t_date AND gt.amount = gt2.amount AND gt.t_type != gt2.t_type AND gt.trans_type = 'Transfer'
                 LEFT JOIN payment_method pm2 ON gt2.method_id = pm2.id
                 WHERE gt.method_id = '$method_id' AND gt.t_type = 'Payment' AND (gt.approval_status = 'Approved' OR gt.approval_status IS NULL)
-                
+
                 UNION ALL
-                
-                SELECT date as date, 
-                       'Client' as category, 
+
+                SELECT date as date,
+                       'Client' as category,
                        CONCAT(
                            '<b>From: ', IFNULL(company_name, 'Unknown'), '</b>',
                            IF(IFNULL(project_name, '') != '', CONCAT(' <small>(Project: ', project_name, ')</small>'), ''),
                            IF(IFNULL(check_no, '') != '', CONCAT('<br><small class=\"text-muted\">Voucher: <b>', check_no, '</b></small>'), ''),
                            IF(IFNULL(ref_no, '') != '', CONCAT('<small class=\"text-muted\"> | Ref: ', ref_no, '</small>'), ''),
                            IF(IFNULL(note, '') != '', CONCAT('<br><small class=\"text-muted\">Note: ', note, '</small>'), '')
-                       ) as note, 
-                       pay_amount as amt_in, 0 as amt_out, id 
-                FROM payment_received_project 
+                       ) as note,
+                       pay_amount as amt_in, 0 as amt_out, id
+                FROM payment_received_project
                 WHERE method_id = '$method_id' AND CAST(pay_amount AS DECIMAL(15,2)) > 0 AND (approval_status = 'Approved' OR approval_status IS NULL)
-                
+
                 UNION ALL
-                
-                SELECT sp.t_date as date, 
-                       'Supplier' as category, 
+
+                SELECT sp.t_date as date,
+                       'Supplier' as category,
                        CONCAT(
                            IF(p.party_name IS NOT NULL, CONCAT('<b>To: ', p.party_name, '</b>'), CONCAT('<b>', IFNULL(sb.supplier_id, 'Cash Purchase'), '</b>')),
                            IF(IFNULL(sp.voucher_no, '') != '', CONCAT('<br><small class=\"text-muted\">Voucher: <b>', sp.voucher_no, '</b></small>'), ''),
                            IF(IFNULL(sp.ref_no, '') != '', CONCAT('<small class=\"text-muted\"> | Ref: ', sp.ref_no, '</small>'), ''),
                            IF(IFNULL(sp.note, '') != '', CONCAT('<br><small class=\"text-muted\">Note: ', sp.note, '</small>'), '')
-                       ) as note, 
-                       0 as amt_in, sp.amount as amt_out, sp.id 
-                FROM supplier_payments sp 
-                LEFT JOIN party p ON sp.supplier_id = p.id 
+                       ) as note,
+                       0 as amt_in, sp.amount as amt_out, sp.id
+                FROM supplier_payments sp
+                LEFT JOIN party p ON sp.supplier_id = p.id
                 LEFT JOIN supplier_bills sb ON sp.bill_id = sb.id
                 WHERE sp.method_id = '$method_id' AND (sp.approval_status = 'Approved' OR sp.approval_status IS NULL)
-                
+
                 UNION ALL
-                
-                SELECT pe.t_date as date, 
-                       'Project Exp' as category, 
+
+                SELECT pe.t_date as date,
+                       'Project Exp' as category,
                        CONCAT(
                            '<b>Project: ', IFNULL(pr.project_name, 'Unknown'), '</b> <small>(Head: ', IFNULL(pe.expense_head, ''), ')</small>',
                            IF(IFNULL(pe.voucher_no, '') != '', CONCAT('<br><small class=\"text-muted\">Voucher: <b>', pe.voucher_no, '</b></small>'), ''),
                            IF(IFNULL(pe.note, '') != '', CONCAT('<br><small class=\"text-muted\">Note: ', pe.note, '</small>'), '')
-                       ) as note, 
-                       0 as amt_in, pe.amount as amt_out, pe.id 
-                FROM project_expenses pe 
-                LEFT JOIN project pr ON pe.project_id = pr.id 
+                       ) as note,
+                       0 as amt_in, pe.amount as amt_out, pe.id
+                FROM project_expenses pe
+                LEFT JOIN project pr ON pe.project_id = pr.id
                 WHERE pe.method_id = '$method_id' AND (pe.approval_status = 'Approved' OR pe.approval_status IS NULL)
             ";
 
@@ -2020,7 +2020,7 @@ class LedgerController extends Controller
             ->where('h.head_type', 'Receive')
             ->whereBetween('gt.t_date', [$from_date, $to_date])
             ->groupBy('h.id')
-            ->selectRaw("h.id, 
+            ->selectRaw("h.id,
                          SUM(CASE WHEN gt.t_type = 'Receive' THEN gt.amount ELSE 0 END) as recv,
                          SUM(CASE WHEN gt.t_type = 'Payment' AND gt.note NOT LIKE '%Interest%' THEN gt.amount ELSE 0 END) as paid")
             ->get();
@@ -2218,7 +2218,11 @@ class LedgerController extends Controller
     {
         $min_sal_date = DB::table('tbl_employee_salary')->min('date');
         $min_adv_date = DB::table('emp_salary_advance')->min('advance_date');
-        $min_date = min(array_filter([$min_sal_date, $min_adv_date])) ?? null;
+        if($min_sal_date != null && $min_adv_date != null){
+            $min_date = @min(@array_filter([$min_sal_date, $min_adv_date])) ?? null;
+        }else{
+            $min_date = null;
+        }
 
         $fromDateSearch = $request->input('fromDate', $request->input('from_date', !empty($min_date) ? date('d-m-Y', strtotime($min_date)) : '01-01-2015'));
         $toDateSearch = $request->input('toDate', $request->input('to_date', date('d-m-Y')));
