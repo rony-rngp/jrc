@@ -40,57 +40,38 @@ class SalaryController extends Controller
                     $response['other_allowances'] = $emp->other_allowances;
                 }
 
-                // Calculate Previous Due & Advance Deduct from closing balance
-                $tot_earned = 0;
-                $tot_paid = 0;
-
-                $sRes = DB::table('tbl_employee_salary')
-                    ->where('employee_id', $empId)
-                    ->select(DB::raw("SUM(IF(pay_month = 'Opening', CAST(due_amount AS DECIMAL(15,2)), CAST(gross_salary AS DECIMAL(15,2)) - CAST(previous_due AS DECIMAL(15,2)) - CAST(fine AS DECIMAL(15,2)) - CAST(other_deduction AS DECIMAL(15,2)))) as t_earned, SUM(CAST(amount AS DECIMAL(15,2))) as t_paid"))
+                // Calculate Previous Due from the latest processed salary
+                $lastSalary = TblEmployeeSalary::where('employee_id', $empId)
+                    ->orderBy('date', 'desc')
+                    ->orderBy('id', 'desc')
                     ->first();
 
-                if ($sRes) {
-                    $tot_earned += (float)($sRes->t_earned ?? 0);
-                    $tot_paid += (float)($sRes->t_paid ?? 0);
+                $previous_due = 0;
+                $extra_advance_from_salary = 0;
+
+                if ($lastSalary) {
+                    $last_due = (float)$lastSalary->due_amount;
+                    if ($last_due > 0) {
+                        $previous_due = $last_due;
+                    } elseif ($last_due < 0) {
+                        $extra_advance_from_salary = abs($last_due);
+                    }
                 }
 
-                $aRes = DB::table('emp_salary_advance')
-                    ->where('employee_id', $empId)
-                    ->where(function($q){
-                        $q->whereNull('note')->orWhere('note', 'not like', '%Auto-generated Advance%');
-                    })
-                    ->select(DB::raw("SUM(CAST(amount AS DECIMAL(15,2))) as t_adv"))
-                    ->first();
-
-                if ($aRes) {
-                    $tot_paid += (float)($aRes->t_adv ?? 0);
-                }
-
-                $current_balance = $tot_earned - $tot_paid;
-
-                // Check if there is an active pending negative advance (balance deduction from salary advance)
-                $pending_neg_adv = (float)DB::table('emp_salary_advance')
+                // Check pending advances for this employee up to the processing month
+                $pending_adv = (float)DB::table('emp_salary_advance')
                     ->where('employee_id', $empId)
                     ->where('status', 'Pending')
-                    ->where('amount', '<', 0)
                     ->where(function($q) use ($month) {
                         $q->where('adjust_month', '<=', $month)->orWhereNull('adjust_month');
                     })
                     ->sum('amount');
 
-                if ($pending_neg_adv < 0) {
-                    $response['advance_deduct'] = round($pending_neg_adv, 2);
-                    $response['previous_due'] = $current_balance > 0 ? round($current_balance, 2) : 0;
-                } elseif ($current_balance > 0) {
-                    $response['previous_due'] = round($current_balance, 2);
-                    $response['advance_deduct'] = 0;
-                } elseif ($current_balance < 0) {
-                    $response['previous_due'] = 0;
-                    $response['advance_deduct'] = round(abs($current_balance), 2);
-                } else {
-                    $response['previous_due'] = 0;
-                    $response['advance_deduct'] = 0;
-                }
+                // Advance deduct = pending advances + any extra advance from last salary
+                $total_adv_deduct = $pending_adv + $extra_advance_from_salary;
+
+                $response['previous_due'] = round($previous_due, 2);
+                $response['advance_deduct'] = round($total_adv_deduct, 2);
 
                 return response()->json($response);
             }
