@@ -2240,50 +2240,44 @@ class LedgerController extends Controller
             $emp_id = $emp->id;
             $emp_name = $emp->firstname . ' ' . $emp->lastname;
 
-            $past_earned = 0;
-            $past_paid = 0;
-
-            // 1. Past Salaries
-            $q_past_sal = DB::table('tbl_employee_salary')
+            // 1. Opening Balance before from_date
+            $lastPastSal = DB::table('tbl_employee_salary')
                 ->where('employee_id', $emp_id)
                 ->where('date', '<', $sqlFromDate)
-                ->selectRaw("SUM(IF(pay_month = 'Opening', CAST(due_amount AS DECIMAL(15,2)), CAST(gross_salary AS DECIMAL(15,2)) - CAST(previous_due AS DECIMAL(15,2)) - CAST(fine AS DECIMAL(15,2)) - CAST(other_deduction AS DECIMAL(15,2)))) as p_earned, SUM(CAST(amount AS DECIMAL(15,2))) as p_paid")
+                ->orderBy('date', 'desc')
+                ->orderBy('id', 'desc')
                 ->first();
-
-            if ($q_past_sal) {
-                $past_earned += (float)($q_past_sal->p_earned ?? 0);
-                $past_paid += (float)($q_past_sal->p_paid ?? 0);
-            }
-
-            // Past non-auto advance
-            $q_past_adv = (float)DB::table('emp_salary_advance')
+            $past_due = $lastPastSal ? (float)$lastPastSal->due_amount : 0;
+            $past_pending_adv = (float)DB::table('emp_salary_advance')
                 ->where('employee_id', $emp_id)
+                ->where('status', 'Pending')
                 ->where('advance_date', '<', $sqlFromDate)
                 ->where('amount', '>', 0)
-                ->where(function ($q) {
-                    $q->where('note', 'not like', '%Auto-generated Advance%')->orWhereNull('note');
-                })
                 ->sum('amount');
-            $past_paid += $q_past_adv;
+            $opening_balance = $past_due - $past_pending_adv;
 
-            $opening_balance = $past_earned - $past_paid;
+            // 2. Closing Position up to to_date (Matches exact Salary Due & Pending Advance)
+            $lastSal = DB::table('tbl_employee_salary')
+                ->where('employee_id', $emp_id)
+                ->where('date', '<=', $sqlToDate)
+                ->orderBy('date', 'desc')
+                ->orderBy('id', 'desc')
+                ->first();
+            $closing_due = $lastSal ? (float)$lastSal->due_amount : 0;
+            $pending_adv = (float)DB::table('emp_salary_advance')
+                ->where('employee_id', $emp_id)
+                ->where('status', 'Pending')
+                ->where('advance_date', '<=', $sqlToDate)
+                ->where('amount', '>', 0)
+                ->sum('amount');
+            $closing_balance = $closing_due - $pending_adv;
 
-            // 2. Period Salaries
-            $period_earned = 0;
-            $period_paid = 0;
-
-            $q_period_sal = DB::table('tbl_employee_salary')
+            // 3. Period Payments (Salary Paid + Given Advances)
+            $sal_paid = (float)DB::table('tbl_employee_salary')
                 ->where('employee_id', $emp_id)
                 ->whereBetween('date', [$sqlFromDate, $sqlToDate])
-                ->selectRaw("SUM(IF(pay_month = 'Opening', CAST(due_amount AS DECIMAL(15,2)), CAST(gross_salary AS DECIMAL(15,2)) - CAST(previous_due AS DECIMAL(15,2)) - CAST(fine AS DECIMAL(15,2)) - CAST(other_deduction AS DECIMAL(15,2)))) as p_earned, SUM(CAST(amount AS DECIMAL(15,2))) as p_paid")
-                ->first();
-
-            if ($q_period_sal) {
-                $period_earned += (float)($q_period_sal->p_earned ?? 0);
-                $period_paid += (float)($q_period_sal->p_paid ?? 0);
-            }
-
-            $q_period_adv = (float)DB::table('emp_salary_advance')
+                ->sum('amount');
+            $adv_paid = (float)DB::table('emp_salary_advance')
                 ->where('employee_id', $emp_id)
                 ->whereBetween('advance_date', [$sqlFromDate, $sqlToDate])
                 ->where('amount', '>', 0)
@@ -2291,9 +2285,10 @@ class LedgerController extends Controller
                     $q->where('note', 'not like', '%Auto-generated Advance%')->orWhereNull('note');
                 })
                 ->sum('amount');
-            $period_paid += $q_period_adv;
+            $period_paid = $sal_paid + $adv_paid;
 
-            $closing_balance = $opening_balance + $period_earned - $period_paid;
+            // 4. Period Earned (Maintains mathematical identity: Opening + Earned - Paid = Closing)
+            $period_earned = $closing_balance - $opening_balance + $period_paid;
 
             $all_emps_summary[] = [
                 'id' => $emp_id,
