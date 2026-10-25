@@ -282,10 +282,65 @@ class SalaryController extends Controller
     {
         // AJAX Request Handler
         if ($request->has('ajax_request') || $request->ajax()) {
-            if ($request->input('ajax_request') == 'get_payment_methods') {
+            $ajax_type = $request->input('ajax_request');
+
+            if ($ajax_type == 'get_payment_methods') {
                 $type = $request->input('type');
                 $methods = PaymentMethod::where('account_type', $type)->orderBy('method_name', 'asc')->get();
                 return response()->json($methods);
+            }
+
+            if ($ajax_type == 'get_adjust_preview') {
+                $id = (int)$request->input('id');
+                $adv = EmpSalaryAdvance::with('employee')->find($id);
+                if (!$adv) {
+                    return response()->json(['status' => 'not_found']);
+                }
+
+                $advance_amount = (float)$adv->amount;
+                $employee_id = (int)$adv->employee_id;
+                $adjust_month = $adv->adjust_month;
+
+                // Priority 1: Salary of exact adjust month
+                $salary = TblEmployeeSalary::where('employee_id', $employee_id)
+                    ->where('pay_month', $adjust_month)
+                    ->first();
+
+                // Priority 2: Latest pending salary with due
+                if (!$salary && !empty($adjust_month)) {
+                    $salary = TblEmployeeSalary::where('employee_id', $employee_id)
+                        ->where('due_amount', '>', 0)
+                        ->where('due_status', 'Pending')
+                        ->where('pay_month', '!=', 'Opening')
+                        ->orderBy('date', 'desc')
+                        ->first();
+                }
+
+                $res = [
+                    'status' => 'ok',
+                    'voucher' => $adv->voucher_no,
+                    'amount' => number_format($advance_amount, 2),
+                    'emp_name' => ($adv->employee->firstname ?? '') . ' ' . ($adv->employee->lastname ?? ''),
+                    'has_salary' => false
+                ];
+
+                if ($salary) {
+                    $gross = (float)$salary->gross_salary;
+                    $paid = (float)$salary->amount;
+                    $fine = (float)$salary->fine;
+                    $other_ded = (float)$salary->other_deduction;
+                    $new_adv_deduct = (float)$salary->adv_deduct + $advance_amount;
+                    $new_net = $gross - ($new_adv_deduct + $fine + $other_ded);
+                    $new_due = max(0, $new_net - $paid);
+
+                    $res['has_salary'] = true;
+                    $res['salary_month'] = $salary->pay_month;
+                    $res['salary_voucher'] = $salary->voucher_no;
+                    $res['current_due'] = number_format((float)$salary->due_amount, 2);
+                    $res['new_due'] = number_format($new_due, 2);
+                }
+
+                return response()->json($res);
             }
         }
 
@@ -423,18 +478,80 @@ class SalaryController extends Controller
                 return redirect()->route('salary.advance')->with('info', "Notice: Voucher ({$advance->voucher_no}) is already marked as Adjusted.");
             }
 
+            $advance_amount = (float)$advance->amount;
+            $employee_id = (int)$advance->employee_id;
+            $adjust_month = $advance->adjust_month;
+
+            // Find matching salary record to automatically adjust due:
+            // 1. Try exact month match
+            $salary = TblEmployeeSalary::where('employee_id', $employee_id)
+                ->where('pay_month', $adjust_month)
+                ->first();
+
+            // 2. If no exact month match, try latest pending salary with due
+            if (!$salary && !empty($adjust_month)) {
+                $salary = TblEmployeeSalary::where('employee_id', $employee_id)
+                    ->where('due_amount', '>', 0)
+                    ->where('due_status', 'Pending')
+                    ->where('pay_month', '!=', 'Opening')
+                    ->orderBy('date', 'desc')
+                    ->first();
+            }
+
+            $adjusted_salary_info = null;
+            $old_due = 0;
+            $new_due = 0;
+
+            if ($salary) {
+                $old_due = (float)$salary->due_amount;
+                $gross = (float)$salary->gross_salary;
+                $paid = (float)$salary->amount;
+                $fine = (float)$salary->fine;
+                $other_ded = (float)$salary->other_deduction;
+
+                // Add to adv_deduct and recalculate
+                $current_adv_deduct = (float)$salary->adv_deduct;
+                $new_adv_deduct = $current_adv_deduct + $advance_amount;
+
+                $new_net = $gross - ($new_adv_deduct + $fine + $other_ded);
+                $new_due = max(0, $new_net - $paid);
+                $new_status = ($new_due <= 0.001) ? 'Cleared' : 'Pending';
+
+                $salary_note = $salary->note ? $salary->note : '';
+                $add_note = " | Adjusted Adv Voucher: {$advance->voucher_no} (৳ " . number_format($advance_amount, 2) . ")";
+
+                $salary->update([
+                    'adv_deduct' => $new_adv_deduct,
+                    'net_payable' => $new_net,
+                    'due_amount' => $new_due,
+                    'due_status' => $new_status,
+                    'note' => $salary_note . $add_note
+                ]);
+
+                $adjusted_salary_info = "Salary Voucher: {$salary->voucher_no} ({$salary->pay_month})";
+            }
+
+            // Update Advance record
             $current_note = $advance->note ? $advance->note : '';
             $adjust_note = ' | Manually Adjusted on ' . date('d-m-Y');
+            if ($adjusted_salary_info) {
+                $adjust_note .= " against {$adjusted_salary_info}";
+            }
 
             $advance->update([
                 'status' => 'Adjusted',
                 'note' => $current_note . $adjust_note
             ]);
 
-            ActivityLogger::log('Update', "Manually adjusted advance voucher {$advance->voucher_no} for employee ID {$advance->employee_id}");
+            ActivityLogger::log('Update', "Manually adjusted advance voucher {$advance->voucher_no} for employee ID {$advance->employee_id}" . ($adjusted_salary_info ? " and updated {$adjusted_salary_info} Due from {$old_due} to {$new_due}" : ""));
             DB::commit();
 
-            return redirect()->route('salary.advance')->with('success', "Advance Voucher ({$advance->voucher_no}) has been manually adjusted successfully!");
+            $msg = "Advance Voucher ({$advance->voucher_no}) adjusted successfully!";
+            if ($adjusted_salary_info) {
+                $msg .= " Automatically updated {$adjusted_salary_info}: Due reduced from ৳ " . number_format($old_due, 2) . " to ৳ " . number_format($new_due, 2) . ".";
+            }
+
+            return redirect()->route('salary.advance')->with('success', $msg);
 
         } catch (\Exception $e) {
             DB::rollBack();

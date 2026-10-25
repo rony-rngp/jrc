@@ -222,15 +222,19 @@
                 <div class="modal-body text-center">
                     <h4 class="text-bold" style="margin-bottom: 15px; color: #333;">Are you sure you want to mark this Advance as Adjusted?</h4>
                     <div style="background: #f4fdf4; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 15px auto; display: inline-block; text-align: left; min-width: 320px;">
-                        <p style="margin-bottom: 5px;"><strong>Voucher No:</strong> <span id="adj_voucher" class="text-primary text-bold"></span></p>
+                        <p style="margin-bottom: 5px;"><strong>Advance Voucher:</strong> <span id="adj_voucher" class="text-primary text-bold"></span></p>
                         <p style="margin-bottom: 5px;"><strong>Employee:</strong> <span id="adj_emp" class="text-bold"></span></p>
-                        <p style="margin-bottom: 0;"><strong>Advance Amount:</strong> <span id="adj_amount" class="text-danger text-bold"></span></p>
+                        <p style="margin-bottom: 5px;"><strong>Advance Amount:</strong> <span id="adj_amount" class="text-danger text-bold"></span></p>
+                        <hr style="margin: 8px 0; border-top: 1px dashed #c3e6cb;">
+                        <div id="adj_salary_info">
+                            <p style="margin-bottom: 5px; color: #0073b7;"><i class="fa fa-spinner fa-spin"></i> Checking linked salary record...</p>
+                        </div>
                     </div>
-                    <p class="text-muted" style="margin-top: 10px;"><small><i class="fa fa-info-circle"></i> Once adjusted, this advance will no longer appear as pending and its Delete button will be hidden.</small></p>
+                    <p class="text-success" style="margin-top: 5px;"><small><i class="fa fa-bolt"></i> <b>Automatic:</b> Clicking confirm will automatically adjust and reduce the Due Amount on the linked salary voucher!</small></p>
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-default btn-flat pull-left" data-dismiss="modal"><i class="fa fa-close"></i> Cancel</button>
-                  <button type="submit" class="btn btn-success btn-flat" name="confirm_adjust"><i class="fa fa-check"></i> Yes, Mark as Adjusted</button>
+                  <button type="submit" class="btn btn-success btn-flat" name="confirm_adjust"><i class="fa fa-check"></i> Yes, Adjust & Update Salary Due</button>
                 </div>
             </form>
         </div>
@@ -292,7 +296,28 @@ $(document).ready(function(){
         $('#adj_voucher').text(voucher);
         $('#adj_emp').text(emp);
         $('#adj_amount').text('৳ ' + amount);
+        $('#adj_salary_info').html('<p style="margin-bottom: 5px; color: #0073b7;"><i class="fa fa-spinner fa-spin"></i> Checking linked salary record...</p>');
         $('#adjustModal').modal('show');
+
+        $.ajax({
+            url: ajaxUrl,
+            type: 'POST',
+            dataType: 'json',
+            data: { ajax_request: 'get_adjust_preview', id: id },
+            success: function(res){
+                if(res.has_salary){
+                    var html = '<p style="margin-bottom: 5px;"><strong>Target Salary:</strong> <span class="label label-primary">' + res.salary_month + ' (Voucher: ' + res.salary_voucher + ')</span></p>';
+                    html += '<p style="margin-bottom: 5px;"><strong>Current Salary Due:</strong> <span style="text-decoration: line-through; color: #888;">৳ ' + res.current_due + '</span></p>';
+                    html += '<p style="margin-bottom: 0; color: #00a65a; font-weight: bold;"><strong>New Due after Adjust:</strong> ৳ ' + res.new_due + ' <small class="text-success"><i class="fa fa-arrow-down"></i> Reduced by ৳ ' + res.amount + '</small></p>';
+                    $('#adj_salary_info').html(html);
+                } else {
+                    $('#adj_salary_info').html('<p style="margin-bottom: 0; color: #888;"><i>No processed salary voucher found for this month yet. Status will be marked as Adjusted.</i></p>');
+                }
+            },
+            error: function(){
+                $('#adj_salary_info').html('<p style="margin-bottom: 0; color: #888;"><i>Linked salary will be automatically updated on confirmation.</i></p>');
+            }
+        });
     });
 
     $('.delete_btn').click(function(e){
