@@ -384,6 +384,10 @@ class SalaryController extends Controller
         DB::beginTransaction();
         try {
             $advance = EmpSalaryAdvance::findOrFail($del_id);
+            if ($advance->status == 'Adjusted') {
+                return redirect()->route('salary.advance')->with('error', "Error: Adjusted advance voucher ({$advance->voucher_no}) cannot be deleted!");
+            }
+
             $del_amount = (float)$advance->amount;
             $del_method_id = (int)$advance->method_id;
             $del_voucher = $advance->voucher_no;
@@ -404,6 +408,37 @@ class SalaryController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->route('salary.advance')->with('error', 'Deletion Failed: ' . $e->getMessage());
+        }
+    }
+
+    public function manualAdjustAdvance(Request $request)
+    {
+        $adjust_id = (int)$request->input('adjust_id');
+
+        DB::beginTransaction();
+        try {
+            $advance = EmpSalaryAdvance::findOrFail($adjust_id);
+
+            if ($advance->status == 'Adjusted') {
+                return redirect()->route('salary.advance')->with('info', "Notice: Voucher ({$advance->voucher_no}) is already marked as Adjusted.");
+            }
+
+            $current_note = $advance->note ? $advance->note : '';
+            $adjust_note = ' | Manually Adjusted on ' . date('d-m-Y');
+
+            $advance->update([
+                'status' => 'Adjusted',
+                'note' => $current_note . $adjust_note
+            ]);
+
+            ActivityLogger::log('Update', "Manually adjusted advance voucher {$advance->voucher_no} for employee ID {$advance->employee_id}");
+            DB::commit();
+
+            return redirect()->route('salary.advance')->with('success', "Advance Voucher ({$advance->voucher_no}) has been manually adjusted successfully!");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('salary.advance')->with('error', 'Adjustment Failed: ' . $e->getMessage());
         }
     }
 

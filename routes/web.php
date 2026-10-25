@@ -70,6 +70,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('salary/advance', [SalaryController::class, 'advance'])->name('salary.advance');
     Route::post('salary/advance', [SalaryController::class, 'storeAdvance'])->name('salary.advance.store');
     Route::post('salary/advance/delete', [SalaryController::class, 'destroyAdvance'])->name('salary.advance.delete');
+    Route::post('salary/advance/adjust', [SalaryController::class, 'manualAdjustAdvance'])->name('salary.advance.adjust');
     Route::get('salary/history', [SalaryController::class, 'history'])->name('salary.history');
     Route::get('salary/sheet/print', [SalaryController::class, 'printSheet'])->name('salary.sheet.print');
     Route::get('salary/payslip/{id}', [SalaryController::class, 'printSlip'])->name('salary.payslip');

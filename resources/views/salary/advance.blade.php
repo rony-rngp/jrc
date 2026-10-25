@@ -183,7 +183,20 @@
                                 </td>
                                 <td>
                                     @if($row->status == 'Pending')
-                                        <button class="btn btn-danger btn-xs btn-flat delete_btn" data-id="{{ $row->id }}" data-voucher="{{ $row->voucher_no }}"><i class="fa fa-trash"></i> Delete</button>
+                                        <button class="btn btn-success btn-xs btn-flat adjust_btn" 
+                                            data-id="{{ $row->id }}" 
+                                            data-voucher="{{ $row->voucher_no }}" 
+                                            data-emp="{{ $row->employee->firstname ?? '' }} {{ $row->employee->lastname ?? '' }}" 
+                                            data-amount="{{ number_format((float)$row->amount, 2) }}">
+                                            <i class="fa fa-check"></i> Adjust
+                                        </button>
+                                        <button class="btn btn-danger btn-xs btn-flat delete_btn" 
+                                            data-id="{{ $row->id }}" 
+                                            data-voucher="{{ $row->voucher_no }}">
+                                            <i class="fa fa-trash"></i> Delete
+                                        </button>
+                                    @else
+                                        <span class="text-muted"><i class="fa fa-lock"></i> Adjusted</span>
                                     @endif
                                 </td>
                             </tr>
@@ -191,6 +204,35 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="adjustModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-green" style="background-color: #00a65a; color: white;">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white; opacity: 0.8;">
+                  <span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title"><b><i class="fa fa-check-circle"></i> Manual Adjust Confirmation</b></h4>
+            </div>
+            <form action="{{ route('salary.advance.adjust') }}" method="POST">
+                @csrf
+                <input type="hidden" class="adj_id" name="adjust_id">
+                <div class="modal-body text-center">
+                    <h4 class="text-bold" style="margin-bottom: 15px; color: #333;">Are you sure you want to mark this Advance as Adjusted?</h4>
+                    <div style="background: #f4fdf4; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 15px auto; display: inline-block; text-align: left; min-width: 320px;">
+                        <p style="margin-bottom: 5px;"><strong>Voucher No:</strong> <span id="adj_voucher" class="text-primary text-bold"></span></p>
+                        <p style="margin-bottom: 5px;"><strong>Employee:</strong> <span id="adj_emp" class="text-bold"></span></p>
+                        <p style="margin-bottom: 0;"><strong>Advance Amount:</strong> <span id="adj_amount" class="text-danger text-bold"></span></p>
+                    </div>
+                    <p class="text-muted" style="margin-top: 10px;"><small><i class="fa fa-info-circle"></i> Once adjusted, this advance will no longer appear as pending and its Delete button will be hidden.</small></p>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default btn-flat pull-left" data-dismiss="modal"><i class="fa fa-close"></i> Cancel</button>
+                  <button type="submit" class="btn btn-success btn-flat" name="confirm_adjust"><i class="fa fa-check"></i> Yes, Mark as Adjusted</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -238,6 +280,20 @@ $(document).ready(function(){
     }
 
     var ajaxUrl = "{{ route('salary.advance') }}";
+
+    $('.adjust_btn').click(function(e){
+        e.preventDefault();
+        var id = $(this).data('id');
+        var voucher = $(this).data('voucher');
+        var emp = $(this).data('emp');
+        var amount = $(this).data('amount');
+        
+        $('.adj_id').val(id);
+        $('#adj_voucher').text(voucher);
+        $('#adj_emp').text(emp);
+        $('#adj_amount').text('৳ ' + amount);
+        $('#adjustModal').modal('show');
+    });
 
     $('.delete_btn').click(function(e){
         e.preventDefault();
