@@ -14,8 +14,13 @@ if (!function_exists('getBdAmountInWords')) {
                 else $str[] = $words[floor($value / 10) * 10] . ' ' . $words[$value % 10] . ' ' . $digits[$counter] . $plural . $hundred;
             } else $str[] = null;
         }
-        $result = implode('', array_reverse($str));
-        return ($result ? $result : "Zero") . " Taka Only.";
+        $str = array_reverse($str); $result = implode('', $str); $result = trim(preg_replace('/\s+/', ' ', $result));
+        $paisa_str = '';
+        if ($point > 0) {
+            if ($point < 21) $paisa_str = " and " . $words[$point] . " Paisa"; 
+            else $paisa_str = " and " . $words[floor($point / 10) * 10] . " " . $words[$point % 10] . " Paisa";
+        }
+        return ($result ? $result . " Taka" : "Zero Taka") . $paisa_str . " Only.";
     }
 }
 $amount_in_words = getBdAmountInWords((float)$amount);
@@ -28,47 +33,113 @@ $amount_in_words = getBdAmountInWords((float)$amount);
     <title>Money Receipt - {{ $voucher_no }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
-        body { font-family: 'Arial', sans-serif; background: #f0f0f0; margin: 0; padding: 20px; }
-        .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); background: #fff; position: relative; }
-        .invoice-box .logo-container { margin: -30px -30px 10px -30px !important; border-radius: 0 !important; }
-        .receipt-header { text-align: center; margin-bottom: 20px; }
-        .voucher-title { display: inline-block; background: #333; color: #fff; padding: 5px 20px; font-size: 18px; font-weight: bold; border-radius: 3px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px;}
-        .info-table { width: 100%; margin-bottom: 20px; font-size: 14px; border-top: 1px solid #eee; padding-top: 15px; }
-        .info-table td { padding: 5px; vertical-align: top; }
+        body { font-family: 'Arial', sans-serif; background: #f4f6f9; margin: 0; padding: 20px 0; color: #222; font-size: 13px; }
+        .invoice-box { 
+            width: 100%; 
+            max-width: 800px; 
+            margin: auto; 
+            padding: 15px 25px 20px 25px; 
+            box-sizing: border-box; 
+            background: #fff; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+            border-radius: 6px; 
+        }
+        .invoice-box .logo-container { 
+            margin: -15px -25px 8px -25px !important; 
+            border-bottom: 2px solid #eee !important; 
+            border-radius: 6px 6px 0 0 !important; 
+        }
+        .invoice-box .logo-container img {
+            width: 100% !important;
+            height: auto !important;
+            display: block !important;
+        }
+        .receipt-header { text-align: center; margin: 4px 0 8px 0; }
+        .voucher-title { 
+            display: inline-block; 
+            border: 1.5px solid #333; 
+            background: #f4f4f4; 
+            color: #111; 
+            padding: 2px 18px; 
+            font-size: 13.5px; 
+            font-weight: 700; 
+            border-radius: 3px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+        }
+
+        .info-table { width: 100%; margin-bottom: 6px; font-size: 12px; border-top: 1px solid #eee; padding-top: 4px; line-height: 1.4; }
+        .info-table td { padding: 2px 4px; vertical-align: top; }
         .info-table .right-align { text-align: right; }
-        .details-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .details-table th, .details-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        .details-table th { background: #f9f9f9; font-weight: bold; color: #333; }
-        .details-table .amount-col { text-align: right; width: 150px; font-weight: bold; }
-        .total-row td { font-weight: bold; font-size: 16px; background: #f1f1f1; }
-        .balance-row td { font-weight: bold; font-size: 14px; background: #e8f5e9; color: #2e7d32; }
-        .words-box { background: #fdfdfd; border: 1px dashed #ccc; padding: 10px; margin-bottom: 40px; font-style: italic; font-weight: bold; color: #444; }
-        .signatures { width: 100%; margin-top: 50px; display: table; }
-        .sig-box { display: table-cell; text-align: center; width: 33.33%; padding: 0 15px; }
-        .sig-line { border-top: 1px solid #333; margin-top: 40px; padding-top: 5px; font-weight: bold; font-size: 14px; }
-        .action-buttons { text-align: center; margin-bottom: 20px; }
-        .btn { background: #00a65a; color: white; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 4px; display: inline-block; text-decoration: none; }
+
+        .details-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 12px; }
+        .details-table th, .details-table td { border: 1px solid #ccc; padding: 5px 8px; text-align: left; }
+        .details-table th { background: #f7f7f7; font-weight: bold; color: #222; font-size: 12px; }
+        .details-table .amount-col { text-align: right; width: 140px; font-weight: bold; white-space: nowrap; }
+        
+        .total-row td { font-weight: bold; font-size: 13px; background: #f0f0f0; }
+        .balance-row td { font-weight: bold; font-size: 12px; background: #edf7ed; color: #2e7d32; }
+        .words-box { background: #fafafa; border: 1px dashed #ccc; padding: 4px 8px; margin-bottom: 6px; font-style: italic; font-weight: 600; color: #333; font-size: 11.5px; line-height: 1.35; }
+
+        .signatures { width: 100%; margin-top: 15px; display: table; }
+        .sig-box { display: table-cell; text-align: center; width: 33.33%; padding: 0 10px; vertical-align: bottom; }
+        .sig-line { border-top: 1.2px solid #333; margin-top: 25px; padding-top: 4px; font-weight: bold; font-size: 11.5px; color: #222; }
+
+        .action-buttons { text-align: center; padding: 15px; margin-bottom: 15px; background: #e9ecef; border-bottom: 1px solid #ddd; }
+        .btn { background: #00a65a; color: white; border: none; padding: 8px 18px; font-size: 14px; cursor: pointer; border-radius: 4px; display: inline-block; text-decoration: none; margin: 0 5px; }
 
         /* প্রিন্টের জন্য হাফ পেজ সেটআপ */
         @media print {
-            body { background: white; padding: 0; margin: 0; }
+            body { background: white !important; padding: 0 !important; margin: 0 !important; }
             .action-buttons { display: none !important; }
-            @page { size: A4; margin: 0; }
+            @page { 
+                size: A4 portrait; 
+                margin: 0; 
+            }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
             .invoice-box { 
-                box-shadow: none; border: none; width: 100%; max-width: 100%; 
-                padding: 15mm; margin: 0;
-                height: 148.5mm; /* A4 এর অর্ধেক */
-                box-sizing: border-box;
-                border-bottom: 1px dashed #ccc; /* কাটার গাইড */
+                box-shadow: none !important; 
+                border: none !important; 
+                border-radius: 0 !important; 
+                width: 100% !important; 
+                max-width: 100% !important; 
+                margin: 0 !important; 
+                padding: 2mm 8mm 3mm 8mm !important; 
+                height: 148.5mm !important; 
+                max-height: 148.5mm !important; 
+                overflow: hidden !important;
+                box-sizing: border-box !important;
+                border-bottom: 1px dashed #777 !important; 
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+                position: relative !important;
+            }
+            .invoice-box .logo-container { 
+                margin: 0 0 4px 0 !important; 
+                border-radius: 0 !important; 
+                border-bottom: 1.5px solid #ccc !important; 
+            }
+            .invoice-box .logo-container img {
+                width: 100% !important;
+                height: auto !important;
+                display: block !important;
+            }
+            .invoice-box .signatures {
+                margin-top: auto !important;
+                padding-bottom: 2mm !important;
             }
         }
     </style>
 </head>
-<body>
+<body onload="window.print();">
 
     <div class="action-buttons">
-        <a href="{{ route('receive-vouchers.index') }}" class="btn" style="background: #6c757d;">Go Back</a>
-        <button onclick="window.print();" class="btn">Print Receipt</button>
+        <a href="{{ route('receive-vouchers.index') }}" class="btn" style="background: #6c757d;"><i class="fa fa-arrow-left"></i> Go Back</a>
+        <button onclick="window.print();" class="btn"><i class="fa fa-print"></i> Print Receipt</button>
     </div>
 
     <div class="invoice-box">
@@ -88,13 +159,13 @@ $amount_in_words = getBdAmountInWords((float)$amount);
             </thead>
             <tbody>
                 <tr>
-                    <td>
-                        <div style="font-size: 16px; margin-bottom: 8px;">{!! $received_from !!}</div>
-                        <div style="margin-top: 15px;"><b>Received Via:</b> {{ $method_name }}</div>
-                        @if(!empty($ref_info))<div style="margin-top: 5px;"><b>Transaction Info:</b> {{ $ref_info }}</div>@endif
-                        @if(!empty($note))<div style="margin-top: 15px; color: #555;"><b>Note:</b> {!! nl2br(e($note)) !!}</div>@endif
+                    <td style="vertical-align: middle;">
+                        <div style="font-size: 13px; font-weight: 600; margin-bottom: 3px;">{!! $received_from !!}</div>
+                        <div style="margin-top: 3px; font-size: 12px;"><b>Received Via:</b> {{ $method_name }}</div>
+                        @if(!empty($ref_info))<div style="margin-top: 2px; font-size: 11px; color: #444;"><b>Transaction Info:</b> {{ $ref_info }}</div>@endif
+                        @if(!empty($note))<div style="margin-top: 3px; color: #555; font-size: 11px;"><b>Note:</b> {!! nl2br(e($note)) !!}</div>@endif
                     </td>
-                    <td class="amount-col" style="vertical-align: bottom; font-size: 18px;">{{ number_format((float)$amount, 2) }}</td>
+                    <td class="amount-col" style="vertical-align: middle; font-size: 15px;">{{ number_format((float)$amount, 2) }}</td>
                 </tr>
                 <tr class="total-row">
                     <td style="text-align: right;">Total Amount Received:</td>
