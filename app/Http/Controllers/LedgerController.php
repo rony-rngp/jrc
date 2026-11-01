@@ -294,19 +294,14 @@ class LedgerController extends Controller
                 // 2. Calculate Lifetime Snapshot
                 $tot_billed = (float)DB::table('supplier_bills')
                     ->where(function($q) use ($supplier_id, $supplier_name) {
-                        $q->where('supplier_id', $supplier_id)
-                          ->orWhere('supplier_id', $supplier_name)
-                          ->orWhere('supplier_id', trim($supplier_name));
+                        $q->where('supplier_id', (string)$supplier_id)
+                          ->orWhere('supplier_id', $supplier_name);
                     })
                     ->where('approval_status', 'Approved')
                     ->sum('grand_total');
 
                 $tot_paid = (float)DB::table('supplier_payments')
-                    ->where(function($q) use ($supplier_id, $supplier_name) {
-                        $q->where('supplier_id', $supplier_id)
-                          ->orWhere('supplier_id', $supplier_name)
-                          ->orWhere('supplier_id', trim($supplier_name));
-                    })
+                    ->where('supplier_id', $supplier_id)
                     ->where('approval_status', 'Approved')
                     ->sum('amount');
 
@@ -327,20 +322,15 @@ class LedgerController extends Controller
                 // 3. Brought Forward (Before from_date)
                 $prev_billed = (float)DB::table('supplier_bills')
                     ->where(function($q) use ($supplier_id, $supplier_name) {
-                        $q->where('supplier_id', $supplier_id)
-                          ->orWhere('supplier_id', $supplier_name)
-                          ->orWhere('supplier_id', trim($supplier_name));
+                        $q->where('supplier_id', (string)$supplier_id)
+                          ->orWhere('supplier_id', $supplier_name);
                     })
                     ->where('bill_date', '<', $from_date)
                     ->where('approval_status', 'Approved')
                     ->sum('grand_total');
 
                 $prev_paid = (float)DB::table('supplier_payments')
-                    ->where(function($q) use ($supplier_id, $supplier_name) {
-                        $q->where('supplier_id', $supplier_id)
-                          ->orWhere('supplier_id', $supplier_name)
-                          ->orWhere('supplier_id', trim($supplier_name));
-                    })
+                    ->where('supplier_id', $supplier_id)
                     ->where('t_date', '<', $from_date)
                     ->where('approval_status', 'Approved')
                     ->sum('amount');
@@ -351,9 +341,8 @@ class LedgerController extends Controller
                 $q_bills = DB::table('supplier_bills as b')
                     ->leftJoin('project as p', 'b.project_id', '=', 'p.id')
                     ->where(function($q) use ($supplier_id, $supplier_name) {
-                        $q->where('b.supplier_id', $supplier_id)
-                          ->orWhere('b.supplier_id', $supplier_name)
-                          ->orWhere('b.supplier_id', trim($supplier_name));
+                        $q->where('b.supplier_id', (string)$supplier_id)
+                          ->orWhere('b.supplier_id', $supplier_name);
                     })
                     ->whereBetween('b.bill_date', [$from_date, $to_date])
                     ->where('b.approval_status', 'Approved')
@@ -372,11 +361,7 @@ class LedgerController extends Controller
 
                 $q_pays = DB::table('supplier_payments as sp')
                     ->leftJoin('project as p', 'sp.project_id', '=', 'p.id')
-                    ->where(function($q) use ($supplier_id, $supplier_name) {
-                        $q->where('sp.supplier_id', $supplier_id)
-                          ->orWhere('sp.supplier_id', $supplier_name)
-                          ->orWhere('sp.supplier_id', trim($supplier_name));
-                    })
+                    ->where('sp.supplier_id', $supplier_id)
                     ->whereBetween('sp.t_date', [$from_date, $to_date])
                     ->where('sp.approval_status', 'Approved')
                     ->select('sp.*', 'p.project_name')
@@ -430,20 +415,15 @@ class LedgerController extends Controller
 
         $prev_billed = (float)DB::table('supplier_bills')
             ->where(function($q) use ($supplier_id, $supplier_name) {
-                $q->where('supplier_id', $supplier_id)
-                  ->orWhere('supplier_id', $supplier_name)
-                  ->orWhere('supplier_id', trim($supplier_name));
+                $q->where('supplier_id', (string)$supplier_id)
+                  ->orWhere('supplier_id', $supplier_name);
             })
             ->where('bill_date', '<', $from_date)
             ->where('approval_status', 'Approved')
             ->sum('grand_total');
 
         $prev_paid = (float)DB::table('supplier_payments')
-            ->where(function($q) use ($supplier_id, $supplier_name) {
-                $q->where('supplier_id', $supplier_id)
-                  ->orWhere('supplier_id', $supplier_name)
-                  ->orWhere('supplier_id', trim($supplier_name));
-            })
+            ->where('supplier_id', $supplier_id)
             ->where('t_date', '<', $from_date)
             ->where('approval_status', 'Approved')
             ->sum('amount');
@@ -454,9 +434,8 @@ class LedgerController extends Controller
         $q_bills = DB::table('supplier_bills as b')
             ->leftJoin('project as p', 'b.project_id', '=', 'p.id')
             ->where(function($q) use ($supplier_id, $supplier_name) {
-                $q->where('b.supplier_id', $supplier_id)
-                  ->orWhere('b.supplier_id', $supplier_name)
-                  ->orWhere('b.supplier_id', trim($supplier_name));
+                $q->where('b.supplier_id', (string)$supplier_id)
+                  ->orWhere('b.supplier_id', $supplier_name);
             })
             ->whereBetween('b.bill_date', [$from_date, $to_date])
             ->where('b.approval_status', 'Approved')
@@ -472,11 +451,7 @@ class LedgerController extends Controller
 
         $q_pays = DB::table('supplier_payments as sp')
             ->leftJoin('project as p', 'sp.project_id', '=', 'p.id')
-            ->where(function($q) use ($supplier_id, $supplier_name) {
-                $q->where('sp.supplier_id', $supplier_id)
-                  ->orWhere('sp.supplier_id', $supplier_name)
-                  ->orWhere('sp.supplier_id', trim($supplier_name));
-            })
+            ->where('sp.supplier_id', $supplier_id)
             ->whereBetween('sp.t_date', [$from_date, $to_date])
             ->where('sp.approval_status', 'Approved')
             ->select('sp.*', 'p.project_name')
@@ -2062,20 +2037,15 @@ class LedgerController extends Controller
             $bal = (float)$s->amount;
             $q_bill = (float)DB::table('supplier_bills')
                 ->where(function($q) use ($sid, $s_name) {
-                    $q->where('supplier_id', $sid)
-                      ->orWhere('supplier_id', $s_name)
-                      ->orWhere('supplier_id', trim($s_name));
+                    $q->where('supplier_id', (string)$sid)
+                      ->orWhere('supplier_id', $s_name);
                 })
                 ->whereBetween('bill_date', [$from_date, $to_date])
                 ->sum('grand_total');
             $bal += $q_bill;
 
             $q_pay = (float)DB::table('supplier_payments')
-                ->where(function($q) use ($sid, $s_name) {
-                    $q->where('supplier_id', $sid)
-                      ->orWhere('supplier_id', $s_name)
-                      ->orWhere('supplier_id', trim($s_name));
-                })
+                ->where('supplier_id', $sid)
                 ->whereBetween('t_date', [$from_date, $to_date])
                 ->sum('amount');
             $bal -= $q_pay;
@@ -2237,19 +2207,14 @@ class LedgerController extends Controller
 
             $past_bill = (float)DB::table('supplier_bills')
                 ->where(function($q) use ($sid, $p_name) {
-                    $q->where('supplier_id', $sid)
-                      ->orWhere('supplier_id', $p_name)
-                      ->orWhere('supplier_id', trim($p_name));
+                    $q->where('supplier_id', (string)$sid)
+                      ->orWhere('supplier_id', $p_name);
                 })
                 ->where('bill_date', '<', $sqlFromDate)
                 ->sum('grand_total');
 
             $past_pay = (float)DB::table('supplier_payments')
-                ->where(function($q) use ($sid, $p_name) {
-                    $q->where('supplier_id', $sid)
-                      ->orWhere('supplier_id', $p_name)
-                      ->orWhere('supplier_id', trim($p_name));
-                })
+                ->where('supplier_id', $sid)
                 ->where('t_date', '<', $sqlFromDate)
                 ->sum('amount');
 
@@ -2257,19 +2222,14 @@ class LedgerController extends Controller
 
             $period_billed = (float)DB::table('supplier_bills')
                 ->where(function($q) use ($sid, $p_name) {
-                    $q->where('supplier_id', $sid)
-                      ->orWhere('supplier_id', $p_name)
-                      ->orWhere('supplier_id', trim($p_name));
+                    $q->where('supplier_id', (string)$sid)
+                      ->orWhere('supplier_id', $p_name);
                 })
                 ->whereBetween('bill_date', [$sqlFromDate, $sqlToDate])
                 ->sum('grand_total');
 
             $period_paid = (float)DB::table('supplier_payments')
-                ->where(function($q) use ($sid, $p_name) {
-                    $q->where('supplier_id', $sid)
-                      ->orWhere('supplier_id', $p_name)
-                      ->orWhere('supplier_id', trim($p_name));
-                })
+                ->where('supplier_id', $sid)
                 ->whereBetween('t_date', [$sqlFromDate, $sqlToDate])
                 ->sum('amount');
 

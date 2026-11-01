@@ -186,17 +186,41 @@ class LedgersComprehensiveTest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        // Supplier 1 (Ma Thai & Interior) with date range including 2026-09-01
-        $res = $this->get('/ledger/supplier?supplier_id=1&from_date=2026-09-01&to_date=2026-10-29&view_ledger=1');
+        // Supplier 1 (Ma Thai & Interior) with date range 2026-09-01 to 2026-11-01
+        $res = $this->get('/ledger/supplier?supplier_id=1&from_date=2026-09-01&to_date=2026-11-01&view_ledger=1');
         $res->assertStatus(200);
+        $res->assertSee('1,478,521.00'); // Brought Forward
+        $res->assertSee('523');
+        $res->assertSee('17,721.00');
         $res->assertSee('524');
-        $res->assertSee('17,373');
+        $res->assertSee('17,373.00');
+        $res->assertSee('525');
+        $res->assertSee('6,895.00');
+        $res->assertSee('3870');
+        $res->assertSee('35,000.00');
+        $res->assertSee('3940');
+        $res->assertSee('300,000.00');
+        $res->assertSee('3953');
+        $res->assertSee('50,000.00');
+        $res->assertSee('3954');
+        $res->assertSee('26,400.00');
+        $res->assertSee('411,400.00'); // Total Dr
+        $res->assertSee('41,989.00');  // Total Cr
+        $res->assertSee('1,847,932.00'); // Closing Balance
+
+        // Make sure unrelated payments with supplier_id=0 are NOT included
+        $res->assertDontSee('3895');
+        $res->assertDontSee('3893');
 
         // Test Print View
-        $printRes = $this->get('/ledger/supplier-print?supplier_id=1&from=2026-09-01&to=2026-10-29');
+        $printRes = $this->get('/ledger/supplier-print?supplier_id=1&from=2026-09-01&to=2026-11-01');
         $printRes->assertStatus(200);
+        $printRes->assertSee('1,478,521.00');
         $printRes->assertSee('524');
-        $printRes->assertSee('17,373');
+        $printRes->assertSee('17,373.00');
+        $printRes->assertSee('411,400.00');
+        $printRes->assertSee('41,989.00');
+        $printRes->assertSee('1,847,932.00');
     }
 
     public function test_employee_salary_sheet_print_layout_and_calculation(): void
