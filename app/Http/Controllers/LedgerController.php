@@ -293,12 +293,20 @@ class LedgerController extends Controller
 
                 // 2. Calculate Lifetime Snapshot
                 $tot_billed = (float)DB::table('supplier_bills')
-                    ->where('supplier_id', $supplier_id)
+                    ->where(function($q) use ($supplier_id, $supplier_name) {
+                        $q->where('supplier_id', $supplier_id)
+                          ->orWhere('supplier_id', $supplier_name)
+                          ->orWhere('supplier_id', trim($supplier_name));
+                    })
                     ->where('approval_status', 'Approved')
                     ->sum('grand_total');
 
                 $tot_paid = (float)DB::table('supplier_payments')
-                    ->where('supplier_id', $supplier_id)
+                    ->where(function($q) use ($supplier_id, $supplier_name) {
+                        $q->where('supplier_id', $supplier_id)
+                          ->orWhere('supplier_id', $supplier_name)
+                          ->orWhere('supplier_id', trim($supplier_name));
+                    })
                     ->where('approval_status', 'Approved')
                     ->sum('amount');
 
@@ -318,13 +326,21 @@ class LedgerController extends Controller
 
                 // 3. Brought Forward (Before from_date)
                 $prev_billed = (float)DB::table('supplier_bills')
-                    ->where('supplier_id', $supplier_id)
+                    ->where(function($q) use ($supplier_id, $supplier_name) {
+                        $q->where('supplier_id', $supplier_id)
+                          ->orWhere('supplier_id', $supplier_name)
+                          ->orWhere('supplier_id', trim($supplier_name));
+                    })
                     ->where('bill_date', '<', $from_date)
                     ->where('approval_status', 'Approved')
                     ->sum('grand_total');
 
                 $prev_paid = (float)DB::table('supplier_payments')
-                    ->where('supplier_id', $supplier_id)
+                    ->where(function($q) use ($supplier_id, $supplier_name) {
+                        $q->where('supplier_id', $supplier_id)
+                          ->orWhere('supplier_id', $supplier_name)
+                          ->orWhere('supplier_id', trim($supplier_name));
+                    })
                     ->where('t_date', '<', $from_date)
                     ->where('approval_status', 'Approved')
                     ->sum('amount');
@@ -334,7 +350,11 @@ class LedgerController extends Controller
                 // 4. Period Ledger Data
                 $q_bills = DB::table('supplier_bills as b')
                     ->leftJoin('project as p', 'b.project_id', '=', 'p.id')
-                    ->where('b.supplier_id', $supplier_id)
+                    ->where(function($q) use ($supplier_id, $supplier_name) {
+                        $q->where('b.supplier_id', $supplier_id)
+                          ->orWhere('b.supplier_id', $supplier_name)
+                          ->orWhere('b.supplier_id', trim($supplier_name));
+                    })
                     ->whereBetween('b.bill_date', [$from_date, $to_date])
                     ->where('b.approval_status', 'Approved')
                     ->select('b.*', 'p.project_name')
@@ -352,7 +372,11 @@ class LedgerController extends Controller
 
                 $q_pays = DB::table('supplier_payments as sp')
                     ->leftJoin('project as p', 'sp.project_id', '=', 'p.id')
-                    ->where('sp.supplier_id', $supplier_id)
+                    ->where(function($q) use ($supplier_id, $supplier_name) {
+                        $q->where('sp.supplier_id', $supplier_id)
+                          ->orWhere('sp.supplier_id', $supplier_name)
+                          ->orWhere('sp.supplier_id', trim($supplier_name));
+                    })
                     ->whereBetween('sp.t_date', [$from_date, $to_date])
                     ->where('sp.approval_status', 'Approved')
                     ->select('sp.*', 'p.project_name')
@@ -389,28 +413,37 @@ class LedgerController extends Controller
 
     public function supplierLedgerPrint(Request $request)
     {
-        $supplier_id = (int)$request->input('supplier', $request->input('supplier_id', 0));
+        $supplier_id = $request->input('supplier', $request->input('supplier_id', ''));
         $from_date = $request->input('from', $request->input('from_date', date('Y-m-d', strtotime('-1 year'))));
         $to_date = $request->input('to', $request->input('to_date', date('Y-m-d')));
 
-        $sup_info = Party::find($supplier_id);
+        $sup_info = is_numeric($supplier_id) ? Party::find($supplier_id) : Party::where('party_name', $supplier_id)->first();
         if (!$sup_info) {
             return "<h2 style='text-align:center; color:red; margin-top:50px;'>Supplier not found!</h2>";
         }
 
         $supplier_name = $sup_info->party_name;
+        $supplier_id = $sup_info->id;
         $opening_balance = (float)$sup_info->amount;
         $contact = $sup_info->party_phone;
         $address = $sup_info->address;
 
         $prev_billed = (float)DB::table('supplier_bills')
-            ->where('supplier_id', $supplier_id)
+            ->where(function($q) use ($supplier_id, $supplier_name) {
+                $q->where('supplier_id', $supplier_id)
+                  ->orWhere('supplier_id', $supplier_name)
+                  ->orWhere('supplier_id', trim($supplier_name));
+            })
             ->where('bill_date', '<', $from_date)
             ->where('approval_status', 'Approved')
             ->sum('grand_total');
 
         $prev_paid = (float)DB::table('supplier_payments')
-            ->where('supplier_id', $supplier_id)
+            ->where(function($q) use ($supplier_id, $supplier_name) {
+                $q->where('supplier_id', $supplier_id)
+                  ->orWhere('supplier_id', $supplier_name)
+                  ->orWhere('supplier_id', trim($supplier_name));
+            })
             ->where('t_date', '<', $from_date)
             ->where('approval_status', 'Approved')
             ->sum('amount');
@@ -420,7 +453,11 @@ class LedgerController extends Controller
         $ledger_data = [];
         $q_bills = DB::table('supplier_bills as b')
             ->leftJoin('project as p', 'b.project_id', '=', 'p.id')
-            ->where('b.supplier_id', $supplier_id)
+            ->where(function($q) use ($supplier_id, $supplier_name) {
+                $q->where('b.supplier_id', $supplier_id)
+                  ->orWhere('b.supplier_id', $supplier_name)
+                  ->orWhere('b.supplier_id', trim($supplier_name));
+            })
             ->whereBetween('b.bill_date', [$from_date, $to_date])
             ->where('b.approval_status', 'Approved')
             ->select('b.*', 'p.project_name')
@@ -435,7 +472,11 @@ class LedgerController extends Controller
 
         $q_pays = DB::table('supplier_payments as sp')
             ->leftJoin('project as p', 'sp.project_id', '=', 'p.id')
-            ->where('sp.supplier_id', $supplier_id)
+            ->where(function($q) use ($supplier_id, $supplier_name) {
+                $q->where('sp.supplier_id', $supplier_id)
+                  ->orWhere('sp.supplier_id', $supplier_name)
+                  ->orWhere('sp.supplier_id', trim($supplier_name));
+            })
             ->whereBetween('sp.t_date', [$from_date, $to_date])
             ->where('sp.approval_status', 'Approved')
             ->select('sp.*', 'p.project_name')
@@ -607,7 +648,10 @@ class LedgerController extends Controller
 
                 // B. Supplier Bills
                 $q_sup_bills = DB::table('supplier_bills as s')
-                    ->leftJoin('party as p', 's.supplier_id', '=', 'p.id')
+                    ->leftJoin('party as p', function($join) {
+                        $join->on('s.supplier_id', '=', 'p.id')
+                             ->orOn('s.supplier_id', '=', 'p.party_name');
+                    })
                     ->where('s.project_id', $project_id)
                     ->whereBetween('s.bill_date', [$from_date, $to_date])
                     ->select('s.*', 'p.party_name')
@@ -830,7 +874,10 @@ class LedgerController extends Controller
         }
 
         $q_sup_bills = DB::table('supplier_bills as s')
-            ->leftJoin('party as p', 's.supplier_id', '=', 'p.id')
+            ->leftJoin('party as p', function($join) {
+                $join->on('s.supplier_id', '=', 'p.id')
+                     ->orOn('s.supplier_id', '=', 'p.party_name');
+            })
             ->where('s.project_id', $project_id)
             ->whereBetween('s.bill_date', [$from_date, $to_date])
             ->select('s.*', 'p.party_name')
@@ -931,9 +978,17 @@ class LedgerController extends Controller
         $project_id = $request->input('project_id', $request->input('project_name', ''));
         $from_date = $request->input('from_date', $request->input('fromDate', ''));
         $to_date = $request->input('to_date', $request->input('toDate', ''));
-        $view_mode = $request->input('view_mode', 'detailed'); // 'detailed' or 'summary'
-        $show_report = false;
 
+        $raw_view_mode = strtolower((string)$request->input('view_mode', 'detailed'));
+        if (in_array($raw_view_mode, ['particular', 'perticular', 'particular_wise', 'perticular_wise'])) {
+            $view_mode = 'particular';
+        } elseif ($raw_view_mode === 'summary') {
+            $view_mode = 'summary';
+        } else {
+            $view_mode = 'detailed';
+        }
+
+        $show_report = false;
         $proj_info = null;
         $client_info = null;
         $project_name = '';
@@ -952,283 +1007,10 @@ class LedgerController extends Controller
 
         if (!empty($project_id)) {
             $show_report = true;
-            $proj_info = Project::where('id', $project_id)->orWhere('project_name', $project_id)->first();
-
-            if ($proj_info) {
+            $data = $this->calculateProjectLedgerV2Data($project_id, $from_date, $to_date, $view_mode, !empty($request->input('from_date')));
+            if ($data) {
+                extract($data);
                 $project_id = $proj_info->id;
-                $project_name = $proj_info->project_name;
-                $company_name = $proj_info->company_name;
-
-                // Client Details
-                $client_info = DB::table('client')->where('company_name', $company_name)->first();
-                if ($client_info) {
-                    $client_person = $client_info->persion_name ?? '';
-                    $client_contact = $client_info->contact ?? '';
-                    $client_address = $client_info->address ?? '';
-                }
-                if (empty($client_address) && !empty($proj_info->address)) {
-                    $client_address = $proj_info->address;
-                }
-
-                // Dates: If user didn't specify dates, find min and max dates from transactions, or project date
-                if (empty($from_date)) {
-                    $min_bill = DB::table('supplier_bills')->where('project_id', $project_id)->min('bill_date');
-                    $min_exp = DB::table('project_expenses')->where('project_id', $project_id)->min('t_date');
-                    $min_pay = DB::table('payment_received_project')->where('project_name', $project_name)->min('date');
-                    $all_mins = array_filter([$min_bill, $min_exp, $min_pay, (!empty($proj_info->date) && $proj_info->date != '0000-00-00' ? $proj_info->date : null)]);
-                    $from_date = !empty($all_mins) ? min($all_mins) : date('Y-m-01');
-                }
-                if (empty($to_date)) {
-                    $max_bill = DB::table('supplier_bills')->where('project_id', $project_id)->max('bill_date');
-                    $max_exp = DB::table('project_expenses')->where('project_id', $project_id)->max('t_date');
-                    $max_pay = DB::table('payment_received_project')->where('project_name', $project_name)->max('date');
-                    $all_maxs = array_filter([$max_bill, $max_exp, $max_pay, (!empty($proj_info->close_date) && $proj_info->close_date != '0000-00-00' ? $proj_info->close_date : null)]);
-                    $to_date = !empty($all_maxs) ? max($all_maxs) : date('Y-m-d');
-                }
-
-                $project_start_date = $from_date;
-                $project_end_date = $to_date;
-
-                // 1. Fetch Supplier Bills (Approved)
-                $sb_query = DB::table('supplier_bills as sb')
-                    ->leftJoin('party as p', 'sb.supplier_id', '=', 'p.id')
-                    ->where('sb.project_id', $project_id)
-                    ->where('sb.approval_status', 'Approved');
-
-                if (!empty($from_date) && !empty($to_date)) {
-                    $sb_query->whereBetween('sb.bill_date', [$from_date, $to_date]);
-                }
-                $supplier_bills = $sb_query->select('sb.*', 'p.party_name')->orderBy('sb.bill_date', 'asc')->orderBy('sb.id', 'asc')->get();
-
-                if ($view_mode === 'summary') {
-                    // Group by Supplier
-                    $grouped_suppliers = [];
-                    foreach ($supplier_bills as $sb) {
-                        $is_cash = ($sb->supplier_id === 'Cash Purchase');
-                        $sup_key = $is_cash ? 'CASH_PURCHASE' : 'SUP_' . $sb->supplier_id;
-                        $sup_name = $is_cash ? 'CASH PURCHASE (JRC)' : ($sb->party_name ?? 'Unknown Supplier');
-
-                        if (!isset($grouped_suppliers[$sup_key])) {
-                            $grouped_suppliers[$sup_key] = [
-                                'supplier_name' => $sup_name,
-                                'is_cash' => $is_cash,
-                                'items' => [],
-                                'notes' => [],
-                                'total_qty' => 0,
-                                'has_pcs' => false,
-                                'has_kb' => false,
-                                'bill_count' => 0,
-                                'amount' => 0,
-                                'remarks' => ''
-                            ];
-                        }
-
-                        $grouped_suppliers[$sup_key]['bill_count']++;
-                        $grouped_suppliers[$sup_key]['amount'] += (float)$sb->grand_total;
-                        if (!empty($sb->note)) {
-                            $grouped_suppliers[$sup_key]['notes'][] = $sb->note;
-                        }
-
-                        // Fetch bill items
-                        $items = DB::table('supplier_bill_items as sbi')
-                            ->leftJoin('material_category as mc', 'sbi.product_id', '=', 'mc.id')
-                            ->where('sbi.bill_id', $sb->id)
-                            ->select('sbi.*', 'mc.cat_name')
-                            ->get();
-
-                        foreach ($items as $it) {
-                            if (!empty($it->cat_name)) {
-                                $grouped_suppliers[$sup_key]['items'][] = $it->cat_name;
-                            }
-                            $grouped_suppliers[$sup_key]['total_qty'] += (float)$it->qty;
-                        }
-                    }
-
-                    foreach ($grouped_suppliers as $g) {
-                        $distinct_items = array_values(array_unique($g['items']));
-                        $particular = '';
-                        if (!empty($distinct_items)) {
-                            $particular = implode(', ', array_slice($distinct_items, 0, 3));
-                            if (count($distinct_items) > 3) $particular .= '...';
-                        } elseif (!empty($g['notes'])) {
-                            $particular = implode('; ', array_slice(array_unique($g['notes']), 0, 2));
-                        } else {
-                            $particular = $g['is_cash'] ? 'CONVANCE BILL & HARDWARE' : 'MATERIAL SUPPLY';
-                        }
-
-                        // Determine QTY label
-                        $qty_label = '';
-                        if ($g['total_qty'] > 0) {
-                            $qty_label = (floor($g['total_qty']) == $g['total_qty'] ? number_format($g['total_qty'], 0) : number_format($g['total_qty'], 1)) . ' Pcs';
-                        } else {
-                            $qty_label = $g['bill_count'] . ' Bill';
-                        }
-
-                        $rows[] = [
-                            'supplier_name' => strtoupper($g['supplier_name']),
-                            'particular'    => strtoupper($particular),
-                            'qty'           => $qty_label,
-                            'amount'        => (float)$g['amount'],
-                            'total_amount'  => (float)$g['amount'],
-                            'remarks'       => '',
-                            'is_cash'       => $g['is_cash'],
-                            'date'          => '',
-                            'type'          => 'Supplier Bill Summary'
-                        ];
-                    }
-                } else {
-                    // Detailed mode: list each bill or each item within bill
-                    foreach ($supplier_bills as $sb) {
-                        $is_cash = ($sb->supplier_id === 'Cash Purchase');
-                        $sup_name = $is_cash ? 'CASH PURCHASE (JRC)' : ($sb->party_name ?? 'Unknown Supplier');
-
-                        $items = DB::table('supplier_bill_items as sbi')
-                            ->leftJoin('material_category as mc', 'sbi.product_id', '=', 'mc.id')
-                            ->where('sbi.bill_id', $sb->id)
-                            ->select('sbi.*', 'mc.cat_name')
-                            ->get();
-
-                        if ($items->count() > 0) {
-                            $tot_qty = $items->sum('qty');
-                            $cat_names = $items->pluck('cat_name')->filter()->unique()->implode(', ');
-                            $particular = $cat_names ?: ($sb->note ?: 'MATERIAL SUPPLY');
-                            $qty_label = ($tot_qty > 0) ? ((floor($tot_qty) == $tot_qty ? number_format($tot_qty, 0) : number_format($tot_qty, 1)) . ' Pcs') : '1 Bill';
-
-                            $rows[] = [
-                                'supplier_name' => strtoupper($sup_name),
-                                'particular'    => strtoupper($particular),
-                                'qty'           => $qty_label,
-                                'amount'        => (float)$sb->grand_total,
-                                'total_amount'  => (float)$sb->grand_total,
-                                'remarks'       => $sb->voucher_no ? 'Vch: ' . $sb->voucher_no : '',
-                                'is_cash'       => $is_cash,
-                                'date'          => $sb->bill_date,
-                                'type'          => 'Supplier Bill'
-                            ];
-                        } else {
-                            $particular = !empty($sb->note) ? $sb->note : ($is_cash ? 'CASH PURCHASE' : 'MATERIAL SUPPLY');
-                            $rows[] = [
-                                'supplier_name' => strtoupper($sup_name),
-                                'particular'    => strtoupper($particular),
-                                'qty'           => '1 Bill',
-                                'amount'        => (float)$sb->grand_total,
-                                'total_amount'  => (float)$sb->grand_total,
-                                'remarks'       => $sb->voucher_no ? 'Vch: ' . $sb->voucher_no : '',
-                                'is_cash'       => $is_cash,
-                                'date'          => $sb->bill_date,
-                                'type'          => 'Supplier Bill'
-                            ];
-                        }
-                    }
-                }
-
-                // 2. Fetch Project Expenses (Approved)
-                $pe_query = DB::table('project_expenses')
-                    ->where('project_id', $project_id)
-                    ->where('approval_status', 'Approved');
-
-                if (!empty($from_date) && !empty($to_date)) {
-                    $pe_query->whereBetween('t_date', [$from_date, $to_date]);
-                }
-                $project_expenses = $pe_query->orderBy('t_date', 'asc')->get();
-
-                if ($view_mode === 'summary' && $project_expenses->count() > 0) {
-                    $tot_exp_amt = $project_expenses->sum('amount');
-                    $heads = $project_expenses->pluck('expense_head')->filter()->unique()->implode(', ');
-                    $particular = !empty($heads) ? ($heads . ' & Other Expense') : 'CONVANCE BILL & SITE EXPENSE';
-
-                    $rows[] = [
-                        'supplier_name' => 'CASH PURCHASE (JRC)',
-                        'particular'    => strtoupper($particular),
-                        'qty'           => $project_expenses->count() . ' Dvch',
-                        'amount'        => (float)$tot_exp_amt,
-                        'total_amount'  => (float)$tot_exp_amt,
-                        'remarks'       => '',
-                        'is_cash'       => true,
-                        'date'          => '',
-                        'type'          => 'Direct Expense Summary'
-                    ];
-                } else {
-                    foreach ($project_expenses as $pe) {
-                        $particular = $pe->expense_head;
-                        if (!empty($pe->note)) {
-                            $particular .= ' (' . $pe->note . ')';
-                        }
-                        $rows[] = [
-                            'supplier_name' => 'CASH PURCHASE (JRC)',
-                            'particular'    => strtoupper($particular),
-                            'qty'           => '1 Dvch',
-                            'amount'        => (float)$pe->amount,
-                            'total_amount'  => (float)$pe->amount,
-                            'remarks'       => $pe->voucher_no ? 'Vch: ' . $pe->voucher_no : '',
-                            'is_cash'       => true,
-                            'date'          => $pe->t_date,
-                            'type'          => 'Direct Expense'
-                        ];
-                    }
-                }
-
-                // 3. Fetch General Transactions (Old Payment Expenses)
-                $gt_query = DB::table('general_transactions')
-                    ->where('project_id', $project_id)
-                    ->where('t_type', 'Payment')
-                    ->where('note', 'not like', '%Purchase%')
-                    ->where('note', 'not like', '%Cash Purchase%');
-
-                if (!empty($from_date) && !empty($to_date)) {
-                    $gt_query->whereBetween('t_date', [$from_date, $to_date]);
-                }
-                $old_expenses = $gt_query->get();
-                foreach ($old_expenses as $oe) {
-                    $rows[] = [
-                        'supplier_name' => 'CASH PURCHASE (JRC)',
-                        'particular'    => strtoupper($oe->note ?: 'OFFICE & SITE EXPENSE'),
-                        'qty'           => '1 Dvch',
-                        'amount'        => (float)$oe->amount,
-                        'total_amount'  => (float)$oe->amount,
-                        'remarks'       => !empty($oe->check_no) ? $oe->check_no : '',
-                        'is_cash'       => true,
-                        'date'          => $oe->t_date,
-                        'type'          => 'Direct Expense'
-                    ];
-                }
-
-                // Sort rows so CASH PURCHASE items are grouped at the bottom, just like reference image
-                usort($rows, function ($a, $b) {
-                    if ($a['is_cash'] === $b['is_cash']) {
-                        return strcmp($a['supplier_name'], $b['supplier_name']);
-                    }
-                    return $a['is_cash'] ? 1 : -1;
-                });
-
-                // Calculate Totals
-                $total_project_cost = array_sum(array_column($rows, 'total_amount'));
-
-                // Total Payments Received from Client
-                $pr_query = DB::table('payment_received_project')
-                    ->where('project_name', $project_name)
-                    ->where('approval_status', 'Approved');
-
-                if (!empty($from_date) && !empty($to_date)) {
-                    $pr_query->whereBetween('date', [$from_date, $to_date]);
-                }
-                $payment_receive = (float)$pr_query->sum('pay_amount');
-
-                // If no date range filter was active or if payment received within period is 0, also show total lifetime collection if available
-                if ($payment_receive == 0 && empty($request->input('from_date'))) {
-                    $payment_receive = (float)DB::table('payment_received_project')
-                        ->where('project_name', $project_name)
-                        ->where('approval_status', 'Approved')
-                        ->sum('pay_amount');
-                }
-
-                // Cost Recover / Balance: Difference between Total Cost and Payment Received
-                $cost_recover = $total_project_cost - $payment_receive;
-                if ($cost_recover >= 0) {
-                    $status_label = 'Cost Recover'; // Outstanding cost to recover / deficit
-                } else {
-                    $status_label = 'Net Surplus / Profit';
-                }
             }
         }
 
@@ -1246,32 +1028,62 @@ class LedgerController extends Controller
         $project_id = $request->input('project_id', $request->input('project_name', ''));
         $from_date = $request->input('from_date', $request->input('fromDate', ''));
         $to_date = $request->input('to_date', $request->input('toDate', ''));
-        $view_mode = $request->input('view_mode', 'detailed');
 
-        // Forward to projectLedgerV2 and return a clean printable view
-        $proj_info = Project::where('id', $project_id)->orWhere('project_name', $project_id)->first();
-        if (!$proj_info) {
+        $raw_view_mode = strtolower((string)$request->input('view_mode', 'detailed'));
+        if (in_array($raw_view_mode, ['particular', 'perticular', 'particular_wise', 'perticular_wise'])) {
+            $view_mode = 'particular';
+        } elseif ($raw_view_mode === 'summary') {
+            $view_mode = 'summary';
+        } else {
+            $view_mode = 'detailed';
+        }
+
+        $data = $this->calculateProjectLedgerV2Data($project_id, $from_date, $to_date, $view_mode, !empty($request->input('from_date')));
+        if (!$data || !$data['proj_info']) {
             return "<h2 style='text-align:center; color:red; margin-top:50px;'>Project not found!</h2>";
         }
 
+        extract($data);
+
+        return view('ledgers.project_v2_print', compact(
+            'proj_info', 'project_name', 'company_name',
+            'client_person', 'client_contact', 'client_address',
+            'project_start_date', 'project_end_date',
+            'rows', 'total_project_cost', 'payment_receive', 'cost_recover', 'status_label'
+        ));
+    }
+
+    protected function calculateProjectLedgerV2Data($project_id, $from_date, $to_date, $view_mode, $has_explicit_from_date = false)
+    {
+        $proj_info = Project::where('id', $project_id)->orWhere('project_name', $project_id)->first();
+        if (!$proj_info) {
+            return null;
+        }
+
+        $project_id = $proj_info->id;
         $project_name = $proj_info->project_name;
         $company_name = $proj_info->company_name;
 
+        // Client Details
         $client_info = DB::table('client')->where('company_name', $company_name)->first();
         $client_person = $client_info->persion_name ?? '';
         $client_contact = $client_info->contact ?? '';
-        $client_address = $client_info->address ?? ($proj_info->address ?? '');
+        $client_address = $client_info->address ?? '';
+        if (empty($client_address) && !empty($proj_info->address)) {
+            $client_address = $proj_info->address;
+        }
 
+        // Dates: If user didn't specify dates, find min and max dates from transactions, or project date
         if (empty($from_date)) {
-            $min_bill = DB::table('supplier_bills')->where('project_id', $proj_info->id)->min('bill_date');
-            $min_exp = DB::table('project_expenses')->where('project_id', $proj_info->id)->min('t_date');
+            $min_bill = DB::table('supplier_bills')->where('project_id', $project_id)->min('bill_date');
+            $min_exp = DB::table('project_expenses')->where('project_id', $project_id)->min('t_date');
             $min_pay = DB::table('payment_received_project')->where('project_name', $project_name)->min('date');
             $all_mins = array_filter([$min_bill, $min_exp, $min_pay, (!empty($proj_info->date) && $proj_info->date != '0000-00-00' ? $proj_info->date : null)]);
             $from_date = !empty($all_mins) ? min($all_mins) : date('Y-m-01');
         }
         if (empty($to_date)) {
-            $max_bill = DB::table('supplier_bills')->where('project_id', $proj_info->id)->max('bill_date');
-            $max_exp = DB::table('project_expenses')->where('project_id', $proj_info->id)->max('t_date');
+            $max_bill = DB::table('supplier_bills')->where('project_id', $project_id)->max('bill_date');
+            $max_exp = DB::table('project_expenses')->where('project_id', $project_id)->max('t_date');
             $max_pay = DB::table('payment_received_project')->where('project_name', $project_name)->max('date');
             $all_maxs = array_filter([$max_bill, $max_exp, $max_pay, (!empty($proj_info->close_date) && $proj_info->close_date != '0000-00-00' ? $proj_info->close_date : null)]);
             $to_date = !empty($all_maxs) ? max($all_maxs) : date('Y-m-d');
@@ -1280,18 +1092,188 @@ class LedgerController extends Controller
         $project_start_date = $from_date;
         $project_end_date = $to_date;
 
+        // 1. Fetch Supplier Bills (Approved)
         $sb_query = DB::table('supplier_bills as sb')
-            ->leftJoin('party as p', 'sb.supplier_id', '=', 'p.id')
-            ->where('sb.project_id', $proj_info->id)
+            ->leftJoin('party as p', function($join) {
+                $join->on('sb.supplier_id', '=', 'p.id')
+                     ->orOn('sb.supplier_id', '=', 'p.party_name');
+            })
+            ->where('sb.project_id', $project_id)
             ->where('sb.approval_status', 'Approved');
 
         if (!empty($from_date) && !empty($to_date)) {
             $sb_query->whereBetween('sb.bill_date', [$from_date, $to_date]);
         }
-        $supplier_bills = $sb_query->select('sb.*', 'p.party_name')->orderBy('sb.bill_date', 'asc')->get();
+        $supplier_bills = $sb_query->select('sb.*', 'p.party_name')->orderBy('sb.bill_date', 'asc')->orderBy('sb.id', 'asc')->get();
+
+        // 2. Fetch Project Expenses (Approved)
+        $pe_query = DB::table('project_expenses')
+            ->where('project_id', $project_id)
+            ->where('approval_status', 'Approved');
+
+        if (!empty($from_date) && !empty($to_date)) {
+            $pe_query->whereBetween('t_date', [$from_date, $to_date]);
+        }
+        $project_expenses = $pe_query->orderBy('t_date', 'asc')->get();
+
+        // 3. Fetch General Transactions (Old Payment Expenses)
+        $gt_query = DB::table('general_transactions')
+            ->where('project_id', $project_id)
+            ->where('t_type', 'Payment')
+            ->where('note', 'not like', '%Purchase%')
+            ->where('note', 'not like', '%Cash Purchase%');
+
+        if (!empty($from_date) && !empty($to_date)) {
+            $gt_query->whereBetween('t_date', [$from_date, $to_date]);
+        }
+        $old_expenses = $gt_query->get();
 
         $rows = [];
-        if ($view_mode === 'summary') {
+
+        if ($view_mode === 'particular') {
+            // Group strictly by Particular (Item/Head)
+            $particular_groups = [];
+
+            foreach ($supplier_bills as $sb) {
+                $is_cash = ($sb->supplier_id === 'Cash Purchase');
+                $sup_name = $is_cash ? 'CASH PURCHASE (JRC)' : ($sb->party_name ?? 'Unknown Supplier');
+
+                $items = DB::table('supplier_bill_items as sbi')
+                    ->leftJoin('material_category as mc', 'sbi.product_id', '=', 'mc.id')
+                    ->where('sbi.bill_id', $sb->id)
+                    ->select('sbi.*', 'mc.cat_name')
+                    ->get();
+
+                if ($items->count() > 0) {
+                    foreach ($items as $it) {
+                        $part = strtoupper(trim($it->cat_name ?: 'MATERIAL SUPPLY'));
+                        if (!isset($particular_groups[$part])) {
+                            $particular_groups[$part] = [
+                                'particular' => $part,
+                                'suppliers'  => [],
+                                'total_qty'  => 0,
+                                'amount'     => 0,
+                                'bill_count' => 0,
+                                'dvch_count' => 0,
+                                'has_credit' => false,
+                            ];
+                        }
+                        if (!in_array($sup_name, $particular_groups[$part]['suppliers'])) {
+                            $particular_groups[$part]['suppliers'][] = $sup_name;
+                        }
+                        $particular_groups[$part]['total_qty'] += (float)$it->qty;
+                        $particular_groups[$part]['amount']    += (float)$it->total_price;
+                        $particular_groups[$part]['bill_count']++;
+                        if (!$is_cash) {
+                            $particular_groups[$part]['has_credit'] = true;
+                        }
+                    }
+                } else {
+                    $part = strtoupper(trim($sb->note ?: ($is_cash ? 'CASH PURCHASE' : 'MATERIAL SUPPLY')));
+                    if (!isset($particular_groups[$part])) {
+                        $particular_groups[$part] = [
+                            'particular' => $part,
+                            'suppliers'  => [],
+                            'total_qty'  => 0,
+                            'amount'     => 0,
+                            'bill_count' => 0,
+                            'dvch_count' => 0,
+                            'has_credit' => false,
+                        ];
+                    }
+                    if (!in_array($sup_name, $particular_groups[$part]['suppliers'])) {
+                        $particular_groups[$part]['suppliers'][] = $sup_name;
+                    }
+                    $particular_groups[$part]['amount']    += (float)$sb->grand_total;
+                    $particular_groups[$part]['bill_count']++;
+                    if (!$is_cash) {
+                        $particular_groups[$part]['has_credit'] = true;
+                    }
+                }
+            }
+
+            foreach ($project_expenses as $pe) {
+                $part = strtoupper(trim($pe->expense_head ?: 'SITE EXPENSE'));
+                if (!isset($particular_groups[$part])) {
+                    $particular_groups[$part] = [
+                        'particular' => $part,
+                        'suppliers'  => [],
+                        'total_qty'  => 0,
+                        'amount'     => 0,
+                        'bill_count' => 0,
+                        'dvch_count' => 0,
+                        'has_credit' => false,
+                    ];
+                }
+                if (!in_array('CASH PURCHASE (JRC)', $particular_groups[$part]['suppliers'])) {
+                    $particular_groups[$part]['suppliers'][] = 'CASH PURCHASE (JRC)';
+                }
+                $particular_groups[$part]['amount'] += (float)$pe->amount;
+                $particular_groups[$part]['dvch_count']++;
+            }
+
+            foreach ($old_expenses as $oe) {
+                $part = strtoupper(trim($oe->note ?: 'OFFICE & SITE EXPENSE'));
+                if (!isset($particular_groups[$part])) {
+                    $particular_groups[$part] = [
+                        'particular' => $part,
+                        'suppliers'  => [],
+                        'total_qty'  => 0,
+                        'amount'     => 0,
+                        'bill_count' => 0,
+                        'dvch_count' => 0,
+                        'has_credit' => false,
+                    ];
+                }
+                if (!in_array('CASH PURCHASE (JRC)', $particular_groups[$part]['suppliers'])) {
+                    $particular_groups[$part]['suppliers'][] = 'CASH PURCHASE (JRC)';
+                }
+                $particular_groups[$part]['amount'] += (float)$oe->amount;
+                $particular_groups[$part]['dvch_count']++;
+            }
+
+            foreach ($particular_groups as $part => $g) {
+                $is_pure_cash = !$g['has_credit'];
+
+                // Sort suppliers so actual supplier names come first, then CASH PURCHASE (JRC)
+                usort($g['suppliers'], function($a, $b) {
+                    if ($a === 'CASH PURCHASE (JRC)') return 1;
+                    if ($b === 'CASH PURCHASE (JRC)') return -1;
+                    return strcmp($a, $b);
+                });
+                $sup_label = implode(', ', $g['suppliers']);
+
+                if ($g['total_qty'] > 0) {
+                    $qty_label = (floor($g['total_qty']) == $g['total_qty'] ? number_format($g['total_qty'], 0) : number_format($g['total_qty'], 1)) . ' Pcs';
+                } elseif ($g['bill_count'] > 0) {
+                    $qty_label = $g['bill_count'] . ' Bill';
+                } else {
+                    $qty_label = $g['dvch_count'] . ' Dvch';
+                }
+
+                $rows[] = [
+                    'supplier_name' => strtoupper($sup_label),
+                    'particular'    => strtoupper($part),
+                    'qty'           => $qty_label,
+                    'amount'        => (float)$g['amount'],
+                    'total_amount'  => (float)$g['amount'],
+                    'remarks'       => '',
+                    'is_cash'       => $is_pure_cash,
+                    'date'          => '',
+                    'type'          => 'Particular Summary'
+                ];
+            }
+
+            // Sort so pure cash items come at the bottom, others alphabetical
+            usort($rows, function ($a, $b) {
+                if ($a['is_cash'] === $b['is_cash']) {
+                    return strcmp($a['particular'], $b['particular']);
+                }
+                return $a['is_cash'] ? 1 : -1;
+            });
+
+        } elseif ($view_mode === 'summary') {
+            // Group by Supplier
             $grouped_suppliers = [];
             foreach ($supplier_bills as $sb) {
                 $is_cash = ($sb->supplier_id === 'Cash Purchase');
@@ -1301,19 +1283,25 @@ class LedgerController extends Controller
                 if (!isset($grouped_suppliers[$sup_key])) {
                     $grouped_suppliers[$sup_key] = [
                         'supplier_name' => $sup_name,
-                        'is_cash' => $is_cash,
-                        'items' => [],
-                        'notes' => [],
-                        'total_qty' => 0,
-                        'bill_count' => 0,
-                        'amount' => 0
+                        'is_cash'       => $is_cash,
+                        'items'         => [],
+                        'notes'         => [],
+                        'total_qty'     => 0,
+                        'has_pcs'       => false,
+                        'has_kb'        => false,
+                        'bill_count'    => 0,
+                        'amount'        => 0,
+                        'remarks'       => ''
                     ];
                 }
 
                 $grouped_suppliers[$sup_key]['bill_count']++;
                 $grouped_suppliers[$sup_key]['amount'] += (float)$sb->grand_total;
-                if (!empty($sb->note)) $grouped_suppliers[$sup_key]['notes'][] = $sb->note;
+                if (!empty($sb->note)) {
+                    $grouped_suppliers[$sup_key]['notes'][] = $sb->note;
+                }
 
+                // Fetch bill items
                 $items = DB::table('supplier_bill_items as sbi')
                     ->leftJoin('material_category as mc', 'sbi.product_id', '=', 'mc.id')
                     ->where('sbi.bill_id', $sb->id)
@@ -1321,15 +1309,32 @@ class LedgerController extends Controller
                     ->get();
 
                 foreach ($items as $it) {
-                    if (!empty($it->cat_name)) $grouped_suppliers[$sup_key]['items'][] = $it->cat_name;
+                    if (!empty($it->cat_name)) {
+                        $grouped_suppliers[$sup_key]['items'][] = $it->cat_name;
+                    }
                     $grouped_suppliers[$sup_key]['total_qty'] += (float)$it->qty;
                 }
             }
 
             foreach ($grouped_suppliers as $g) {
                 $distinct_items = array_values(array_unique($g['items']));
-                $particular = !empty($distinct_items) ? implode(', ', array_slice($distinct_items, 0, 3)) : ($g['is_cash'] ? 'CONVANCE BILL & HARDWARE' : 'MATERIAL SUPPLY');
-                $qty_label = ($g['total_qty'] > 0) ? ((floor($g['total_qty']) == $g['total_qty'] ? number_format($g['total_qty'], 0) : number_format($g['total_qty'], 1)) . ' Pcs') : ($g['bill_count'] . ' Bill');
+                $particular = '';
+                if (!empty($distinct_items)) {
+                    $particular = implode(', ', array_slice($distinct_items, 0, 3));
+                    if (count($distinct_items) > 3) $particular .= '...';
+                } elseif (!empty($g['notes'])) {
+                    $particular = implode('; ', array_slice(array_unique($g['notes']), 0, 2));
+                } else {
+                    $particular = $g['is_cash'] ? 'CONVANCE BILL & HARDWARE' : 'MATERIAL SUPPLY';
+                }
+
+                // Determine QTY label
+                $qty_label = '';
+                if ($g['total_qty'] > 0) {
+                    $qty_label = (floor($g['total_qty']) == $g['total_qty'] ? number_format($g['total_qty'], 0) : number_format($g['total_qty'], 1)) . ' Pcs';
+                } else {
+                    $qty_label = $g['bill_count'] . ' Bill';
+                }
 
                 $rows[] = [
                     'supplier_name' => strtoupper($g['supplier_name']),
@@ -1338,10 +1343,53 @@ class LedgerController extends Controller
                     'amount'        => (float)$g['amount'],
                     'total_amount'  => (float)$g['amount'],
                     'remarks'       => '',
-                    'is_cash'       => $g['is_cash']
+                    'is_cash'       => $g['is_cash'],
+                    'date'          => '',
+                    'type'          => 'Supplier Bill Summary'
                 ];
             }
+
+            if ($project_expenses->count() > 0) {
+                $tot_exp_amt = $project_expenses->sum('amount');
+                $heads = $project_expenses->pluck('expense_head')->filter()->unique()->implode(', ');
+                $particular = !empty($heads) ? ($heads . ' & Other Expense') : 'CONVANCE BILL & SITE EXPENSE';
+
+                $rows[] = [
+                    'supplier_name' => 'CASH PURCHASE (JRC)',
+                    'particular'    => strtoupper($particular),
+                    'qty'           => $project_expenses->count() . ' Dvch',
+                    'amount'        => (float)$tot_exp_amt,
+                    'total_amount'  => (float)$tot_exp_amt,
+                    'remarks'       => '',
+                    'is_cash'       => true,
+                    'date'          => '',
+                    'type'          => 'Direct Expense Summary'
+                ];
+            }
+
+            foreach ($old_expenses as $oe) {
+                $rows[] = [
+                    'supplier_name' => 'CASH PURCHASE (JRC)',
+                    'particular'    => strtoupper($oe->note ?: 'OFFICE & SITE EXPENSE'),
+                    'qty'           => '1 Dvch',
+                    'amount'        => (float)$oe->amount,
+                    'total_amount'  => (float)$oe->amount,
+                    'remarks'       => !empty($oe->check_no) ? $oe->check_no : '',
+                    'is_cash'       => true,
+                    'date'          => $oe->t_date,
+                    'type'          => 'Direct Expense'
+                ];
+            }
+
+            usort($rows, function ($a, $b) {
+                if ($a['is_cash'] === $b['is_cash']) {
+                    return strcmp($a['supplier_name'], $b['supplier_name']);
+                }
+                return $a['is_cash'] ? 1 : -1;
+            });
+
         } else {
+            // Detailed mode: list each bill or each item within bill
             foreach ($supplier_bills as $sb) {
                 $is_cash = ($sb->supplier_id === 'Cash Purchase');
                 $sup_name = $is_cash ? 'CASH PURCHASE (JRC)' : ($sb->party_name ?? 'Unknown Supplier');
@@ -1352,110 +1400,125 @@ class LedgerController extends Controller
                     ->select('sbi.*', 'mc.cat_name')
                     ->get();
 
-                $tot_qty = $items->sum('qty');
-                $cat_names = $items->pluck('cat_name')->filter()->unique()->implode(', ');
-                $particular = $cat_names ?: ($sb->note ?: 'MATERIAL SUPPLY');
-                $qty_label = ($tot_qty > 0) ? ((floor($tot_qty) == $tot_qty ? number_format($tot_qty, 0) : number_format($tot_qty, 1)) . ' Pcs') : '1 Bill';
+                if ($items->count() > 0) {
+                    $tot_qty = $items->sum('qty');
+                    $cat_names = $items->pluck('cat_name')->filter()->unique()->implode(', ');
+                    $particular = $cat_names ?: ($sb->note ?: 'MATERIAL SUPPLY');
+                    $qty_label = ($tot_qty > 0) ? ((floor($tot_qty) == $tot_qty ? number_format($tot_qty, 0) : number_format($tot_qty, 1)) . ' Pcs') : '1 Bill';
 
-                $rows[] = [
-                    'supplier_name' => strtoupper($sup_name),
-                    'particular'    => strtoupper($particular),
-                    'qty'           => $qty_label,
-                    'amount'        => (float)$sb->grand_total,
-                    'total_amount'  => (float)$sb->grand_total,
-                    'remarks'       => $sb->voucher_no ? 'Vch: ' . $sb->voucher_no : '',
-                    'is_cash'       => $is_cash
-                ];
+                    $rows[] = [
+                        'supplier_name' => strtoupper($sup_name),
+                        'particular'    => strtoupper($particular),
+                        'qty'           => $qty_label,
+                        'amount'        => (float)$sb->grand_total,
+                        'total_amount'  => (float)$sb->grand_total,
+                        'remarks'       => $sb->voucher_no ? 'Vch: ' . $sb->voucher_no : '',
+                        'is_cash'       => $is_cash,
+                        'date'          => $sb->bill_date,
+                        'type'          => 'Supplier Bill'
+                    ];
+                } else {
+                    $particular = !empty($sb->note) ? $sb->note : ($is_cash ? 'CASH PURCHASE' : 'MATERIAL SUPPLY');
+                    $rows[] = [
+                        'supplier_name' => strtoupper($sup_name),
+                        'particular'    => strtoupper($particular),
+                        'qty'           => '1 Bill',
+                        'amount'        => (float)$sb->grand_total,
+                        'total_amount'  => (float)$sb->grand_total,
+                        'remarks'       => $sb->voucher_no ? 'Vch: ' . $sb->voucher_no : '',
+                        'is_cash'       => $is_cash,
+                        'date'          => $sb->bill_date,
+                        'type'          => 'Supplier Bill'
+                    ];
+                }
             }
-        }
 
-        // Project expenses
-        $pe_query = DB::table('project_expenses')
-            ->where('project_id', $proj_info->id)
-            ->where('approval_status', 'Approved');
-        if (!empty($from_date) && !empty($to_date)) {
-            $pe_query->whereBetween('t_date', [$from_date, $to_date]);
-        }
-        $project_expenses = $pe_query->orderBy('t_date', 'asc')->get();
-
-        if ($view_mode === 'summary' && $project_expenses->count() > 0) {
-            $tot_exp_amt = $project_expenses->sum('amount');
-            $heads = $project_expenses->pluck('expense_head')->filter()->unique()->implode(', ');
-            $rows[] = [
-                'supplier_name' => 'CASH PURCHASE (JRC)',
-                'particular'    => strtoupper($heads ? ($heads . ' & SITE EXPENSE') : 'CONVANCE BILL & HARDWARE'),
-                'qty'           => $project_expenses->count() . ' Dvch',
-                'amount'        => (float)$tot_exp_amt,
-                'total_amount'  => (float)$tot_exp_amt,
-                'remarks'       => '',
-                'is_cash'       => true
-            ];
-        } else {
             foreach ($project_expenses as $pe) {
+                $particular = $pe->expense_head;
+                if (!empty($pe->note)) {
+                    $particular .= ' (' . $pe->note . ')';
+                }
                 $rows[] = [
                     'supplier_name' => 'CASH PURCHASE (JRC)',
-                    'particular'    => strtoupper($pe->expense_head . ($pe->note ? ' (' . $pe->note . ')' : '')),
+                    'particular'    => strtoupper($particular),
                     'qty'           => '1 Dvch',
                     'amount'        => (float)$pe->amount,
                     'total_amount'  => (float)$pe->amount,
                     'remarks'       => $pe->voucher_no ? 'Vch: ' . $pe->voucher_no : '',
-                    'is_cash'       => true
+                    'is_cash'       => true,
+                    'date'          => $pe->t_date,
+                    'type'          => 'Direct Expense'
                 ];
             }
-        }
 
-        // Old general transactions
-        $gt_query = DB::table('general_transactions')
-            ->where('project_id', $proj_info->id)
-            ->where('t_type', 'Payment')
-            ->where('note', 'not like', '%Purchase%')
-            ->where('note', 'not like', '%Cash Purchase%');
-        if (!empty($from_date) && !empty($to_date)) {
-            $gt_query->whereBetween('t_date', [$from_date, $to_date]);
-        }
-        foreach ($gt_query->get() as $oe) {
-            $rows[] = [
-                'supplier_name' => 'CASH PURCHASE (JRC)',
-                'particular'    => strtoupper($oe->note ?: 'OFFICE & SITE EXPENSE'),
-                'qty'           => '1 Dvch',
-                'amount'        => (float)$oe->amount,
-                'total_amount'  => (float)$oe->amount,
-                'remarks'       => !empty($oe->check_no) ? $oe->check_no : '',
-                'is_cash'       => true
-            ];
-        }
-
-        usort($rows, function ($a, $b) {
-            if ($a['is_cash'] === $b['is_cash']) {
-                return strcmp($a['supplier_name'], $b['supplier_name']);
+            foreach ($old_expenses as $oe) {
+                $rows[] = [
+                    'supplier_name' => 'CASH PURCHASE (JRC)',
+                    'particular'    => strtoupper($oe->note ?: 'OFFICE & SITE EXPENSE'),
+                    'qty'           => '1 Dvch',
+                    'amount'        => (float)$oe->amount,
+                    'total_amount'  => (float)$oe->amount,
+                    'remarks'       => !empty($oe->check_no) ? $oe->check_no : '',
+                    'is_cash'       => true,
+                    'date'          => $oe->t_date,
+                    'type'          => 'Direct Expense'
+                ];
             }
-            return $a['is_cash'] ? 1 : -1;
-        });
 
+            // Sort rows so CASH PURCHASE items are grouped at the bottom, just like reference image
+            usort($rows, function ($a, $b) {
+                if ($a['is_cash'] === $b['is_cash']) {
+                    return strcmp($a['supplier_name'], $b['supplier_name']);
+                }
+                return $a['is_cash'] ? 1 : -1;
+            });
+        }
+
+        // Calculate Totals
         $total_project_cost = array_sum(array_column($rows, 'total_amount'));
+
+        // Total Payments Received from Client
         $pr_query = DB::table('payment_received_project')
             ->where('project_name', $project_name)
             ->where('approval_status', 'Approved');
+
         if (!empty($from_date) && !empty($to_date)) {
             $pr_query->whereBetween('date', [$from_date, $to_date]);
         }
         $payment_receive = (float)$pr_query->sum('pay_amount');
-        if ($payment_receive == 0 && empty($request->input('from_date'))) {
+
+        // If no date range filter was active or if payment received within period is 0, also show total lifetime collection if available
+        if ($payment_receive == 0 && !$has_explicit_from_date) {
             $payment_receive = (float)DB::table('payment_received_project')
                 ->where('project_name', $project_name)
                 ->where('approval_status', 'Approved')
                 ->sum('pay_amount');
         }
 
+        // Cost Recover / Balance: Difference between Total Cost and Payment Received
         $cost_recover = $total_project_cost - $payment_receive;
-        $status_label = ($cost_recover >= 0) ? 'Cost Recover' : 'Net Surplus / Profit';
+        if ($cost_recover >= 0) {
+            $status_label = 'Cost Recover'; // Outstanding cost to recover / deficit
+        } else {
+            $status_label = 'Net Surplus / Profit';
+        }
 
-        return view('ledgers.project_v2_print', compact(
-            'proj_info', 'project_name', 'company_name',
-            'client_person', 'client_contact', 'client_address',
-            'project_start_date', 'project_end_date',
-            'rows', 'total_project_cost', 'payment_receive', 'cost_recover', 'status_label'
-        ));
+        return [
+            'proj_info'          => $proj_info,
+            'client_info'        => $client_info,
+            'project_name'       => $project_name,
+            'company_name'       => $company_name,
+            'client_person'      => $client_person,
+            'client_contact'     => $client_contact,
+            'client_address'     => $client_address,
+            'project_start_date' => $project_start_date,
+            'project_end_date'   => $project_end_date,
+            'rows'               => $rows,
+            'total_project_cost' => $total_project_cost,
+            'payment_receive'    => $payment_receive,
+            'cost_recover'       => $cost_recover,
+            'status_label'       => $status_label,
+        ];
     }
 
     // ==========================================
@@ -1995,15 +2058,24 @@ class LedgerController extends Controller
         $parties = Party::all();
         foreach ($parties as $s) {
             $sid = $s->id;
+            $s_name = $s->party_name;
             $bal = (float)$s->amount;
             $q_bill = (float)DB::table('supplier_bills')
-                ->where('supplier_id', $sid)
+                ->where(function($q) use ($sid, $s_name) {
+                    $q->where('supplier_id', $sid)
+                      ->orWhere('supplier_id', $s_name)
+                      ->orWhere('supplier_id', trim($s_name));
+                })
                 ->whereBetween('bill_date', [$from_date, $to_date])
                 ->sum('grand_total');
             $bal += $q_bill;
 
             $q_pay = (float)DB::table('supplier_payments')
-                ->where('supplier_id', $sid)
+                ->where(function($q) use ($sid, $s_name) {
+                    $q->where('supplier_id', $sid)
+                      ->orWhere('supplier_id', $s_name)
+                      ->orWhere('supplier_id', trim($s_name));
+                })
                 ->whereBetween('t_date', [$from_date, $to_date])
                 ->sum('amount');
             $bal -= $q_pay;
@@ -2164,24 +2236,40 @@ class LedgerController extends Controller
             $base_op = (float)$party->amount;
 
             $past_bill = (float)DB::table('supplier_bills')
-                ->where('supplier_id', $sid)
+                ->where(function($q) use ($sid, $p_name) {
+                    $q->where('supplier_id', $sid)
+                      ->orWhere('supplier_id', $p_name)
+                      ->orWhere('supplier_id', trim($p_name));
+                })
                 ->where('bill_date', '<', $sqlFromDate)
                 ->sum('grand_total');
 
             $past_pay = (float)DB::table('supplier_payments')
-                ->where('supplier_id', $sid)
+                ->where(function($q) use ($sid, $p_name) {
+                    $q->where('supplier_id', $sid)
+                      ->orWhere('supplier_id', $p_name)
+                      ->orWhere('supplier_id', trim($p_name));
+                })
                 ->where('t_date', '<', $sqlFromDate)
                 ->sum('amount');
 
             $opening_balance = $base_op + $past_bill - $past_pay;
 
             $period_billed = (float)DB::table('supplier_bills')
-                ->where('supplier_id', $sid)
+                ->where(function($q) use ($sid, $p_name) {
+                    $q->where('supplier_id', $sid)
+                      ->orWhere('supplier_id', $p_name)
+                      ->orWhere('supplier_id', trim($p_name));
+                })
                 ->whereBetween('bill_date', [$sqlFromDate, $sqlToDate])
                 ->sum('grand_total');
 
             $period_paid = (float)DB::table('supplier_payments')
-                ->where('supplier_id', $sid)
+                ->where(function($q) use ($sid, $p_name) {
+                    $q->where('supplier_id', $sid)
+                      ->orWhere('supplier_id', $p_name)
+                      ->orWhere('supplier_id', trim($p_name));
+                })
                 ->whereBetween('t_date', [$sqlFromDate, $sqlToDate])
                 ->sum('amount');
 

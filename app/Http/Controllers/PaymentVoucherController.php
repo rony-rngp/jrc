@@ -67,9 +67,15 @@ class PaymentVoucherController extends Controller
             // 5. Get Supplier Projects
             if ($ajax_request == 'get_supplier_projects') {
                 $supplierId = $request->input('supplier_id');
+                $party = is_numeric($supplierId) ? Party::find($supplierId) : Party::where('party_name', $supplierId)->first();
+                $partyId = $party ? $party->id : $supplierId;
+                $partyName = $party ? $party->party_name : $supplierId;
+
                 $projects = DB::table('supplier_bills as sb')
                     ->join('project as p', 'p.id', '=', 'sb.project_id')
-                    ->where('sb.supplier_id', $supplierId)
+                    ->where(function($q) use ($partyId, $partyName) {
+                        $q->where('sb.supplier_id', $partyId)->orWhere('sb.supplier_id', $partyName);
+                    })
                     ->select('p.id', 'p.project_name')
                     ->distinct()
                     ->orderBy('p.project_name', 'asc')
@@ -81,8 +87,13 @@ class PaymentVoucherController extends Controller
             if ($ajax_request == 'get_supplier_pending_bills') {
                 $supplierId = $request->input('supplier_id');
                 $projectId = (int)$request->input('project_id');
+                $party = is_numeric($supplierId) ? Party::find($supplierId) : Party::where('party_name', $supplierId)->first();
+                $partyId = $party ? $party->id : $supplierId;
+                $partyName = $party ? $party->party_name : $supplierId;
 
-                $bills = SupplierBill::where('supplier_id', $supplierId)
+                $bills = SupplierBill::where(function($q) use ($partyId, $partyName) {
+                        $q->where('supplier_id', $partyId)->orWhere('supplier_id', $partyName);
+                    })
                     ->where('project_id', $projectId)
                     ->where('due_amount', '>', 0)
                     ->orderBy('bill_date', 'asc')
@@ -94,13 +105,19 @@ class PaymentVoucherController extends Controller
             // 7. Get Supplier Overall Due / Advance
             if ($ajax_request == 'get_supplier_total_dues') {
                 $supplierId = $request->input('supplier_id');
-                $party = Party::find($supplierId);
+                $party = is_numeric($supplierId) ? Party::find($supplierId) : Party::where('party_name', $supplierId)->first();
+                $partyId = $party ? $party->id : $supplierId;
+                $partyName = $party ? $party->party_name : $supplierId;
                 $opening = $party ? (float)$party->amount : 0;
 
-                $billed = (float)SupplierBill::where('supplier_id', $supplierId)
+                $billed = (float)SupplierBill::where(function($q) use ($partyId, $partyName) {
+                        $q->where('supplier_id', $partyId)->orWhere('supplier_id', $partyName);
+                    })
                     ->whereIn('approval_status', ['Approved', 'Pending'])
                     ->sum('grand_total');
-                $paid = (float)SupplierPayment::where('supplier_id', $supplierId)
+                $paid = (float)SupplierPayment::where(function($q) use ($partyId, $partyName) {
+                        $q->where('supplier_id', $partyId)->orWhere('supplier_id', $partyName);
+                    })
                     ->whereIn('approval_status', ['Approved', 'Pending'])
                     ->sum('amount');
 
@@ -119,9 +136,18 @@ class PaymentVoucherController extends Controller
             if ($ajax_request == 'get_supplier_project_summary') {
                 $supplierId = $request->input('supplier_id');
                 $projectId = (int)$request->input('project_id');
+                $party = is_numeric($supplierId) ? Party::find($supplierId) : Party::where('party_name', $supplierId)->first();
+                $partyId = $party ? $party->id : $supplierId;
+                $partyName = $party ? $party->party_name : $supplierId;
 
-                $billed = (float)SupplierBill::where('supplier_id', $supplierId)->where('project_id', $projectId)->sum('grand_total');
-                $paid = (float)SupplierPayment::where('supplier_id', $supplierId)->where('project_id', $projectId)->sum('amount');
+                $billed = (float)SupplierBill::where(function($q) use ($partyId, $partyName) {
+                        $q->where('supplier_id', $partyId)->orWhere('supplier_id', $partyName);
+                    })
+                    ->where('project_id', $projectId)->sum('grand_total');
+                $paid = (float)SupplierPayment::where(function($q) use ($partyId, $partyName) {
+                        $q->where('supplier_id', $partyId)->orWhere('supplier_id', $partyName);
+                    })
+                    ->where('project_id', $projectId)->sum('amount');
 
                 $net = $billed - $paid;
                 $status = ($net > 0) ? 'Due Balance' : (($net < 0) ? 'Advance Balance' : 'Fully Cleared');

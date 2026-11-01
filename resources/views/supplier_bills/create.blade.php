@@ -26,7 +26,7 @@
                                 <select class="form-control" name="supplier_id" required>
                                     <option value="">- Select Supplier -</option>
                                     @foreach($suppliers as $s)
-                                        <option value="{{ $s->party_name }}">{{ $s->party_name }}</option>
+                                        <option value="{{ $s->id }}">{{ $s->party_name }}</option>
                                     @endforeach
                                 </select>
                             </div>

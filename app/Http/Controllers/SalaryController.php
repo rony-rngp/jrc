@@ -596,7 +596,37 @@ class SalaryController extends Controller
 
         $salaries = $query->orderBy('date', 'asc')->orderBy('id', 'asc')->get();
 
-        return view('salary.sheet_print', compact('salaries', 'employee', 'employee_id', 'from_date', 'to_date', 'pay_month'));
+        // Calculate brought forward if from_date is set and specific employee
+        $brought_forward = 0;
+        if (!empty($employee_id) && !empty($from_date)) {
+            $prior_salaries = TblEmployeeSalary::where('employee_id', $employee_id)
+                ->where('date', '<', $from_date)
+                ->orderBy('date', 'asc')
+                ->orderBy('id', 'asc')
+                ->get();
+
+            foreach ($prior_salaries as $pr) {
+                $is_op = (strtolower($pr->pay_month) == 'opening' || str_contains(strtolower($pr->note ?? ''), 'opening'));
+                if ($is_op && (float)$pr->main_salary == 0 && (float)$pr->due_amount > 0) {
+                    $p_net = (float)$pr->due_amount;
+                    $p_paid = (float)$pr->amount;
+                } else {
+                    $p_basic = (float)$pr->main_salary;
+                    $p_allow = (float)$pr->mobile_bill + (float)$pr->lunch_bill + (float)$pr->other_allowances + (float)$pr->bonus;
+                    if ((float)$pr->adv_deduct < 0) {
+                        $p_allow += abs((float)$pr->adv_deduct);
+                        $p_deduct = (float)$pr->fine + (float)$pr->other_deduction;
+                    } else {
+                        $p_deduct = (float)$pr->adv_deduct + (float)$pr->fine + (float)$pr->other_deduction;
+                    }
+                    $p_net = ($p_basic + $p_allow) - $p_deduct;
+                    $p_paid = (float)$pr->amount;
+                }
+                $brought_forward += ($p_net - $p_paid);
+            }
+        }
+
+        return view('salary.sheet_print', compact('salaries', 'employee', 'employee_id', 'from_date', 'to_date', 'pay_month', 'brought_forward'));
     }
 
     public function printSlip($id)

@@ -312,6 +312,7 @@
                         <select class="form-control" name="view_mode">
                             <option value="detailed" {{ $view_mode == 'detailed' ? 'selected' : '' }}>Detailed (Per Bill/Vch)</option>
                             <option value="summary" {{ $view_mode == 'summary' ? 'selected' : '' }}>Summary (Per Supplier)</option>
+                            <option value="particular" {{ in_array($view_mode, ['particular', 'perticular', 'particular_wise', 'perticular_wise']) ? 'selected' : '' }}>Perticular wise</option>
                         </select>
                     </div>
                 </div>

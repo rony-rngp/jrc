@@ -148,4 +148,79 @@ class LedgersComprehensiveTest extends TestCase
         $res->assertSee('Employee Balances Summary');
         $res->assertSee('Period Earned');
     }
+
+    public function test_project_ledger_v2_view_modes(): void
+    {
+        $this->actingAs($this->admin);
+
+        $res = $this->get('/ledger/project-v2');
+        $res->assertStatus(200);
+        $res->assertSee('Project Ledger V2');
+        $res->assertSee('Perticular wise');
+
+        $project = Project::find(26) ?: Project::first();
+        if ($project) {
+            // 1. Detailed mode
+            $res = $this->get('/ledger/project-v2?project_id=' . $project->id . '&view_mode=detailed');
+            $res->assertStatus(200);
+            $res->assertSee('TOATAL PROJECT COST');
+
+            // 2. Summary mode
+            $res = $this->get('/ledger/project-v2?project_id=' . $project->id . '&view_mode=summary');
+            $res->assertStatus(200);
+            $res->assertSee('TOATAL PROJECT COST');
+
+            // 3. Particular wise mode
+            $res = $this->get('/ledger/project-v2?project_id=' . $project->id . '&view_mode=particular');
+            $res->assertStatus(200);
+            $res->assertSee('TOATAL PROJECT COST');
+
+            // 4. Particular wise print view
+            $res = $this->get('/ledger/project-v2-print?project_id=' . $project->id . '&view_mode=particular');
+            $res->assertStatus(200);
+            $res->assertSee('TOATAL PROJECT COST');
+        }
+    }
+
+    public function test_supplier_ledger_shows_all_vouchers_including_voucher_524(): void
+    {
+        $this->actingAs($this->admin);
+
+        // Supplier 1 (Ma Thai & Interior) with date range including 2026-09-01
+        $res = $this->get('/ledger/supplier?supplier_id=1&from_date=2026-09-01&to_date=2026-10-29&view_ledger=1');
+        $res->assertStatus(200);
+        $res->assertSee('524');
+        $res->assertSee('17,373');
+
+        // Test Print View
+        $printRes = $this->get('/ledger/supplier-print?supplier_id=1&from=2026-09-01&to=2026-10-29');
+        $printRes->assertStatus(200);
+        $printRes->assertSee('524');
+        $printRes->assertSee('17,373');
+    }
+
+    public function test_employee_salary_sheet_print_layout_and_calculation(): void
+    {
+        $this->actingAs($this->admin);
+
+        // Test employee 3 print sheet
+        $res = $this->get('/salary/sheet/print?employee_id=3&from_date=&to_date=&pay_month=');
+        $res->assertStatus(200);
+        $res->assertSee('EMPLOYEE SALARY & PAYMENT LEDGER', false);
+        $res->assertSee('Shakilur Rahman');
+        $res->assertSee('Basic Salary');
+        $res->assertSee('Allowances');
+        $res->assertSee('Gross Salary');
+        $res->assertSee('Deductions');
+        $res->assertSee('Net Payable');
+        $res->assertSee('Paid Amount');
+        $res->assertSee('Due / (Advance)');
+        $res->assertSee('Voucher No');
+        $res->assertSee('TOTAL');
+        $res->assertSee('Received By');
+        $res->assertSee('Accounts Manager');
+        $res->assertSee('Checked By');
+        $res->assertSee('Audit By');
+        $res->assertSee('Approved By');
+    }
 }

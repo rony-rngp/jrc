@@ -49,7 +49,7 @@
                                 <select class="form-control select2" name="supplier_id" id="supplier_id" style="width:100%;" required>
                                     <option value="Cash Purchase" {{ $bill->supplier_id == 'Cash Purchase' ? 'selected' : '' }}>-- Cash Purchase (নগদ ক্রয়) --</option>
                                     @foreach($suppliers as $sup)
-                                        <option value="{{ $sup->party_name }}" {{ $bill->supplier_id == $sup->party_name ? 'selected' : '' }}>{{ $sup->party_name }}</option>
+                                        <option value="{{ $sup->id }}" {{ ($bill->supplier_id == $sup->id || $bill->supplier_id == $sup->party_name) ? 'selected' : '' }}>{{ $sup->party_name }}</option>
                                     @endforeach
                                 </select>
                             </div>

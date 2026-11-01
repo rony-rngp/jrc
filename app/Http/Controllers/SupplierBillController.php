@@ -132,6 +132,12 @@ class SupplierBillController extends Controller
 
         $bill_type = $request->input('bill_entry_type') ?? $request->input('bill_type') ?? 'Only Bill';
         $supplier_id = $request->input('supplier_id');
+        if ($supplier_id !== 'Cash Purchase' && !empty($supplier_id)) {
+            $foundParty = Party::where('party_name', $supplier_id)->first() ?? Party::find($supplier_id);
+            if ($foundParty) {
+                $supplier_id = (string)$foundParty->id;
+            }
+        }
         $project_id = (int)$request->input('project_id', 0);
         $voucher_no = $request->input('voucher_no') ?? ('SB-' . strtoupper(uniqid()));
         $bill_date = $request->input('bill_date') ?? $request->input('date') ?? date('Y-m-d');
@@ -332,6 +338,12 @@ class SupplierBillController extends Controller
 
         $bill_type = $request->input('bill_entry_type', 'Only Bill');
         $supplier_id = $request->input('supplier_id');
+        if ($supplier_id !== 'Cash Purchase' && !empty($supplier_id)) {
+            $foundParty = Party::where('party_name', $supplier_id)->first() ?? Party::find($supplier_id);
+            if ($foundParty) {
+                $supplier_id = (string)$foundParty->id;
+            }
+        }
         $project_id = (int)$request->input('project_id', 0);
         $voucher_no = $request->input('voucher_no', $bill->voucher_no);
         $bill_date = $request->input('bill_date', date('Y-m-d'));
