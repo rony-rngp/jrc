@@ -372,7 +372,7 @@
                             $date_display = '';
                         } else {
                             // Regular Monthly Salary Record
-                            $basic = (float)$s->main_salary > 0 ? (float)$s->main_salary : ((float)($s->employee->salary ?? 0));
+                            $basic = ($s->main_salary !== null && $s->main_salary !== '') ? (float)$s->main_salary : ((float)($s->employee->salary ?? 0));
                             $allowances = (float)$s->mobile_bill + (float)$s->lunch_bill + (float)$s->other_allowances + (float)$s->bonus;
                             
                             // If adv_deduct was stored as negative adjustment (bonus/addition), add to allowances

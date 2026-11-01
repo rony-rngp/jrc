@@ -404,6 +404,8 @@ class LedgersComprehensiveTest extends TestCase
         $sheetRes->assertSee($vch2);
         $sheetRes->assertSee($vch3);
         $sheetRes->assertSee($vch4);
+        // Verify installment with 0 basic displays ৳ 0.00 instead of employee's base salary (50,000)
+        $sheetRes->assertSee('৳ 0.00');
 
         // Clean up test employee
         DB::table('tbl_employee_salary')->where('employee_id', $emp->id)->delete();
