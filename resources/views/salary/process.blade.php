@@ -53,7 +53,13 @@
                                     <option value="{{ $erow->id }}">{{ $erow->firstname }} {{ $erow->lastname }} ({{ $erow->employee_id }})</option>
                                 @endforeach
                             </select>
-                            <span id="paid_warning" class="text-danger font-weight-bold" style="display:none; margin-top:5px;"><i class="fa fa-ban"></i> Salary already paid for this employee in selected month!</span>
+                            <div id="multiple_entry_notice" class="alert alert-info" style="display:none; margin-top:10px; margin-bottom:5px; padding:10px 14px; border-left:4px solid #00c0ef;">
+                                <i class="fa fa-info-circle fa-lg"></i> <b>Installment / Partial Salary Notice:</b><br>
+                                This employee already has <b id="prior_entry_count">0</b> payment(s) in selected month.
+                                Total paid so far: <b>৳ <span id="prior_paid_display">0.00</span></b>.
+                                <span id="prior_due_box" style="display:none;">Remaining balance from last entry: <b>৳ <span id="prior_due_display">0.00</span></b>.</span>
+                                <br><small class="text-muted"><i class="fa fa-check-circle text-success"></i> You can enter another broken amount, installment, or advance below. Basic Salary and Paid Amount are editable.</small>
+                            </div>
                         </div>
                     </div>
 
@@ -65,8 +71,11 @@
                                     <h4 class="text-success"><i class="fa fa-plus-circle"></i> Earnings & Allowances</h4>
                                     <hr style="margin: 10px 0;">
                                     <div class="form-group">
-                                        <label class="col-sm-6 control-label">Basic Salary</label>
-                                        <div class="col-sm-6"><input type="number" step="0.01" class="form-control amount-text auto-calc" name="main_salary" id="main_salary" value="0" readonly></div>
+                                        <label class="col-sm-6 control-label">Basic Salary <span class="text-danger">*</span></label>
+                                        <div class="col-sm-6">
+                                            <input type="number" step="0.01" class="form-control amount-text auto-calc" name="main_salary" id="main_salary" value="0" required>
+                                            <small class="text-muted" style="font-size: 11px;"><i class="fa fa-pencil"></i> Editable for installment / broken amount</small>
+                                        </div>
                                     </div>
                                     <div class="form-group">
                                         <label class="col-sm-6 control-label">Mobile Bill</label>
@@ -277,13 +286,23 @@ $(document).ready(function(){
             dataType: 'json',
             data: { ajax_request: 'get_salary_info', emp_id: emp_id, month: month },
             success: function(res){
-                if(res.status === 'paid'){
-                    $('#paid_warning').show();
-                    $('#salary_calc_area').slideUp();
-                    return;
+                if(res.has_prior_entry){
+                    $('#prior_entry_count').text(res.prior_count);
+                    var paidFmt = parseFloat(res.prior_paid || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    $('#prior_paid_display').text(paidFmt);
+
+                    if(res.previous_due > 0){
+                        var dueFmt = parseFloat(res.previous_due || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        $('#prior_due_display').text(dueFmt);
+                        $('#prior_due_box').show();
+                    } else {
+                        $('#prior_due_box').hide();
+                    }
+                    $('#multiple_entry_notice').slideDown();
+                } else {
+                    $('#multiple_entry_notice').slideUp();
                 }
                 
-                $('#paid_warning').hide();
                 $('#emp_name').val(res.emp_name);
                 $('#main_salary').val(res.salary);
                 $('#mobile_bill').val(res.mobile_bill);

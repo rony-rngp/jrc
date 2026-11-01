@@ -24,23 +24,23 @@ class SalaryController extends Controller
                 $empId = (int)$request->input('emp_id');
                 $month = $request->input('month');
 
-                $checkPaid = TblEmployeeSalary::where('employee_id', $empId)->where('pay_month', $month)->exists();
-                if ($checkPaid) {
-                    return response()->json(['status' => 'paid']);
-                }
-
-                $response = ['status' => 'unpaid'];
                 $emp = Employee::find($empId);
 
-                if ($emp) {
-                    $response['emp_name'] = $emp->firstname . ' ' . $emp->lastname;
-                    $response['salary'] = $emp->salary;
-                    $response['mobile_bill'] = $emp->mobile_bill;
-                    $response['lunch_bill'] = $emp->lunch_bill;
-                    $response['other_allowances'] = $emp->other_allowances;
-                }
+                // Check prior entries in this specific month
+                $existingInMonth = TblEmployeeSalary::where('employee_id', $empId)
+                    ->where('pay_month', $month)
+                    ->orderBy('date', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->get();
 
-                // Calculate Previous Due from the latest processed salary
+                $prior_count = $existingInMonth->count();
+                $prior_paid = (float)$existingInMonth->sum('amount');
+                $prior_main_salary = (float)$existingInMonth->sum(function($r) {
+                    return (float)$r->main_salary;
+                });
+                $has_prior_entry = ($prior_count > 0);
+
+                // Calculate Previous Due from the latest processed salary overall
                 $lastSalary = TblEmployeeSalary::where('employee_id', $empId)
                     ->orderBy('date', 'desc')
                     ->orderBy('id', 'desc')
@@ -70,8 +70,34 @@ class SalaryController extends Controller
                 // Advance deduct = pending advances + any extra advance from last salary
                 $total_adv_deduct = $pending_adv + $extra_advance_from_salary;
 
-                $response['previous_due'] = round($previous_due, 2);
-                $response['advance_deduct'] = round($total_adv_deduct, 2);
+                // Determine suggested basic salary
+                $base_salary = $emp ? (float)$emp->salary : 0;
+                if ($has_prior_entry) {
+                    // If previous entry for this month left a pending due, the payable is already in $previous_due
+                    if ($previous_due > 0) {
+                        $suggested_salary = 0;
+                    } else {
+                        // If no due left, suggest the remaining unpaid basic salary for the month (if any)
+                        $suggested_salary = max(0, $base_salary - $prior_main_salary);
+                    }
+                } else {
+                    $suggested_salary = $base_salary;
+                }
+
+                $response = [
+                    'status' => 'unpaid',
+                    'has_prior_entry' => $has_prior_entry,
+                    'prior_count' => $prior_count,
+                    'prior_paid' => round($prior_paid, 2),
+                    'emp_name' => $emp ? ($emp->firstname . ' ' . $emp->lastname) : '',
+                    'salary' => round($suggested_salary, 2),
+                    'base_salary' => round($base_salary, 2),
+                    'mobile_bill' => $has_prior_entry ? 0 : ($emp ? (float)$emp->mobile_bill : 0),
+                    'lunch_bill' => $has_prior_entry ? 0 : ($emp ? (float)$emp->lunch_bill : 0),
+                    'other_allowances' => $has_prior_entry ? 0 : ($emp ? (float)$emp->other_allowances : 0),
+                    'previous_due' => round($previous_due, 2),
+                    'advance_deduct' => round($total_adv_deduct, 2),
+                ];
 
                 return response()->json($response);
             }
@@ -110,11 +136,6 @@ class SalaryController extends Controller
             if ($pmFound) {
                 $method_id = $pmFound->id;
             }
-        }
-
-        $check_month = TblEmployeeSalary::where('employee_id', $employee_id)->where('pay_month', $pay_month)->exists();
-        if ($check_month) {
-            return redirect()->route('salary.process')->with('error', "Warning: Salary for this month is already paid!");
         }
 
         $check_voucher = GeneralTransaction::where('check_no', $voucher)->exists();
@@ -285,6 +306,7 @@ class SalaryController extends Controller
                 // Priority 1: Salary of exact adjust month
                 $salary = TblEmployeeSalary::where('employee_id', $employee_id)
                     ->where('pay_month', $adjust_month)
+                    ->orderBy('id', 'desc')
                     ->first();
 
                 // Priority 2: Latest pending salary with due
@@ -467,6 +489,7 @@ class SalaryController extends Controller
             // 1. Try exact month match
             $salary = TblEmployeeSalary::where('employee_id', $employee_id)
                 ->where('pay_month', $adjust_month)
+                ->orderBy('id', 'desc')
                 ->first();
 
             // 2. If no exact month match, try latest pending salary with due

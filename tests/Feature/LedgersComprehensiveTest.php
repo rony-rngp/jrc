@@ -7,6 +7,7 @@ use App\Models\Admin;
 use App\Models\Client;
 use App\Models\Party;
 use App\Models\Project;
+use App\Models\Employee;
 use App\Models\PaymentMethod;
 use App\Models\AccountHead;
 use Illuminate\Support\Facades\Hash;
@@ -246,5 +247,167 @@ class LedgersComprehensiveTest extends TestCase
         $res->assertSee('Checked By');
         $res->assertSee('Audit By');
         $res->assertSee('Approved By');
+    }
+
+    public function test_multiple_salary_entries_and_installments_in_same_month(): void
+    {
+        $this->actingAs($this->admin);
+
+        // 1. Create a test employee with basic salary 50,000
+        $emp = Employee::create([
+            'employee_id' => 'EMP-MULTI-' . rand(1000, 9999),
+            'firstname' => 'TestMulti',
+            'lastname' => 'Employee',
+            'contact_info' => '01700000000',
+            'salary' => 50000,
+            'mobile_bill' => 0,
+            'lunch_bill' => 0,
+            'other_allowances' => 0,
+        ]);
+
+        $targetMonth = '2026-11';
+
+        // 2. Initial AJAX check: no prior entries in November
+        $res = $this->post('/salary/process', [
+            'ajax_request' => 'get_salary_info',
+            'emp_id' => $emp->id,
+            'month' => $targetMonth
+        ]);
+        $res->assertStatus(200);
+        $res->assertJson([
+            'status' => 'unpaid',
+            'has_prior_entry' => false,
+            'salary' => 50000,
+            'previous_due' => 0,
+        ]);
+
+        // 3. Installment 1: Pay 10,000 out of 50,000
+        $vch1 = 'SAL-NOV-01-' . rand(100, 999);
+        $res1 = $this->post('/salary/process', [
+            'employee_id' => $emp->id,
+            'pay_month' => $targetMonth,
+            'date' => '2026-11-05',
+            'voucher' => $vch1,
+            'main_salary' => 50000,
+            'paid_amount' => 10000,
+            'previous_due' => 0,
+            'method_name' => 'Cash',
+            'deposit_category' => 'Cash',
+        ]);
+        $res1->assertRedirect('/salary/process');
+        $res1->assertSessionHas('success');
+
+        $this->assertDatabaseHas('tbl_employee_salary', [
+            'employee_id' => $emp->id,
+            'pay_month' => $targetMonth,
+            'voucher_no' => $vch1,
+            'main_salary' => '50000',
+            'amount' => '10000',
+            'due_amount' => 40000.00,
+            'due_status' => 'Pending',
+        ]);
+
+        // 4. AJAX check again: should NOT be blocked as paid, should indicate 1 prior entry with remaining due
+        $res = $this->post('/salary/process', [
+            'ajax_request' => 'get_salary_info',
+            'emp_id' => $emp->id,
+            'month' => $targetMonth
+        ]);
+        $res->assertStatus(200);
+        $res->assertJson([
+            'status' => 'unpaid',
+            'has_prior_entry' => true,
+            'prior_count' => 1,
+            'prior_paid' => 10000,
+            'previous_due' => 40000,
+            'salary' => 0, // already in previous_due
+        ]);
+
+        // 5. Installment 2: Pay 5,000 against the 40,000 previous due
+        $vch2 = 'SAL-NOV-02-' . rand(100, 999);
+        $res2 = $this->post('/salary/process', [
+            'employee_id' => $emp->id,
+            'pay_month' => $targetMonth,
+            'date' => '2026-11-15',
+            'voucher' => $vch2,
+            'main_salary' => 0,
+            'previous_due' => 40000,
+            'paid_amount' => 5000,
+            'method_name' => 'Cash',
+            'deposit_category' => 'Cash',
+        ]);
+        $res2->assertRedirect('/salary/process');
+        $res2->assertSessionHas('success');
+
+        $this->assertDatabaseHas('tbl_employee_salary', [
+            'employee_id' => $emp->id,
+            'pay_month' => $targetMonth,
+            'voucher_no' => $vch2,
+            'amount' => '5000',
+            'due_amount' => 35000.00,
+            'due_status' => 'Pending',
+        ]);
+
+        // 6. Installment 3: Pay 20,000 against the 35,000 previous due
+        $vch3 = 'SAL-NOV-03-' . rand(100, 999);
+        $res3 = $this->post('/salary/process', [
+            'employee_id' => $emp->id,
+            'pay_month' => $targetMonth,
+            'date' => '2026-11-25',
+            'voucher' => $vch3,
+            'main_salary' => 0,
+            'previous_due' => 35000,
+            'paid_amount' => 20000,
+            'method_name' => 'Cash',
+            'deposit_category' => 'Cash',
+        ]);
+        $res3->assertRedirect('/salary/process');
+        $res3->assertSessionHas('success');
+
+        $this->assertDatabaseHas('tbl_employee_salary', [
+            'employee_id' => $emp->id,
+            'pay_month' => $targetMonth,
+            'voucher_no' => $vch3,
+            'amount' => '20000',
+            'due_amount' => 15000.00,
+            'due_status' => 'Pending',
+        ]);
+
+        // 7. Installment 4: Pay 25,000 (15,000 clears due + 10,000 extra becomes advance for December!)
+        $vch4 = 'SAL-NOV-04-' . rand(100, 999);
+        $res4 = $this->post('/salary/process', [
+            'employee_id' => $emp->id,
+            'pay_month' => $targetMonth,
+            'date' => '2026-11-28',
+            'voucher' => $vch4,
+            'main_salary' => 0,
+            'previous_due' => 15000,
+            'paid_amount' => 25000,
+            'method_name' => 'Cash',
+            'deposit_category' => 'Cash',
+        ]);
+        $res4->assertRedirect('/salary/process');
+        $res4->assertSessionHas('success');
+
+        // Check advance created for December
+        $this->assertDatabaseHas('emp_salary_advance', [
+            'employee_id' => $emp->id,
+            'amount' => '10000.00',
+            'adjust_month' => '2026-12',
+            'status' => 'Pending',
+        ]);
+
+        // 8. Verify print sheet displays all installments
+        $sheetRes = $this->get('/salary/sheet/print?employee_id=' . $emp->id . '&pay_month=' . $targetMonth);
+        $sheetRes->assertStatus(200);
+        $sheetRes->assertSee($vch1);
+        $sheetRes->assertSee($vch2);
+        $sheetRes->assertSee($vch3);
+        $sheetRes->assertSee($vch4);
+
+        // Clean up test employee
+        DB::table('tbl_employee_salary')->where('employee_id', $emp->id)->delete();
+        DB::table('emp_salary_advance')->where('employee_id', $emp->id)->delete();
+        $emp->delete();
     }
 }
